@@ -1,0 +1,6 @@
+﻿<rz:PageHost x:Class="RZScreenSaver.ScreenSaver"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:rz="clr-namespace:RZScreenSaver"
+    Title="ScreenSaver" Topmost="True">
+</rz:PageHost>

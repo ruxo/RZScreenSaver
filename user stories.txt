@@ -1,0 +1,20 @@
+[  ] User: I want Photo Collage can provide an option dialog for setting effects (e.g. Enable/disable desaturation)
+
+[  ] Dev: I want this program to be really shell's desktop (like Deskscape)
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+2.0.6
+[ok] User: I want to exclude a folder from a picture folder list.
+[ok] User: I want to temporarily set the folder of the displayed picture as the picture source, so that I can consider if the folder should be deleted entirely.
+[ok] User: I want to set the start background of Photo Collage with a picture I want.
+[ok] User: I want to *physically* move current showing picture to a target directory I select.
+2.0.5.3
+[ok] Dev: I want to make this saver to run as desktop slide show (like Deskscape) with an icon on system tray (for quitting).
+[ok] User: I want the background of Photo Collage saver to be desaturated to GrayScale (or Sepia, or both) over time.
+[ok] User: I want to have image collection present so that I can switch them to "appropriate occasion:
+	while the screen saver is running.
+[ok] User: I want to be able to *physically* delete any showing picture that I don't like while the screen saver is running.
+[ok] User: I want a new photo that is appearing in the Photo Collage saver fades in smoothly (around 2 secs?)
+[ok] User: I want the random location of picture in Photo Collage be more distributed.
+[ok] User: I want to call Config dialog while the saver is running.
+[OK] User: I want to the picture to be displayed orientally corrected (i.e. with the guide of EXIF tags)

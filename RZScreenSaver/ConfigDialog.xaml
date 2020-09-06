@@ -1,0 +1,125 @@
+﻿<Window x:Class="RZScreenSaver.ConfigDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:wf="clr-namespace:System.Windows.Forms;assembly=System.Windows.Forms"
+    xmlns:rz="clr-namespace:RZScreenSaver"
+    Title="RZ Slide Show Configuration"
+        MinWidth="600" MinHeight="360"
+        WindowStartupLocation="CenterScreen" Height="460" Width="600" ShowInTaskbar="False"
+        Padding="2" ResizeMode="CanResizeWithGrip" Icon="images/Clipping Text.png">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+    <Rectangle Fill="WhiteSmoke" />
+    <DockPanel>
+            <DockPanel DockPanel.Dock="Top">
+                <GroupBox Header="Saver mode" DockPanel.Dock="Right">
+                    <StackPanel>
+                        <RadioButton Name="asSlideShowMode" IsChecked="True" Checked="onContentChanged">Slide show</RadioButton>
+                        <RadioButton Name="asPhotoCollageMode" IsChecked="False" Checked="onContentChanged">Photo collage</RadioButton>
+                        <RadioButton Name="asMixedMode" IsChecked="False" Checked="onContentChanged">Mixed</RadioButton>
+                    </StackPanel>
+                </GroupBox>
+                <Grid VerticalAlignment="Top">
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Label Name="label1" Grid.Row="0" Grid.Column="0">Slide Delay (s)</Label>
+                    <WindowsFormsHost Margin="3" TabIndex="0" Grid.Row="1" Grid.Column="0">
+                        <wf:NumericUpDown x:Name="slideDelayInput" Minimum="3" Maximum="99" ForeColor="Black" />
+                    </WindowsFormsHost>
+                    <Label Name="label2" Grid.Row="0" Grid.Column="1">Slide Mode:</Label>
+                    <ComboBox Name="slideModeList" Margin="3" Grid.Row="1" Grid.Column="1" SelectionChanged="onChangeSlideMode">
+                        <rz:SlideMode>Sequence</rz:SlideMode>
+                        <rz:SlideMode>SortedByDateAllFolders</rz:SlideMode>
+                        <rz:SlideMode>SortedByFilenameAllFolders</rz:SlideMode>
+                        <rz:SlideMode>SortedByDatePerFolder</rz:SlideMode>
+                        <rz:SlideMode>SortedByFilenamePerFolder</rz:SlideMode>
+                        <rz:SlideMode>Random</rz:SlideMode>
+                    </ComboBox>
+                    <Label Name="label3" Grid.Column="2">Display Mode:</Label>
+                    <ComboBox Name="displayModeList" Margin="3" Grid.Row="1" Grid.Column="2" SelectionChanged="onContentChanged">
+                        <rz:DisplayMode>Original</rz:DisplayMode>
+                        <rz:DisplayMode>Stretch</rz:DisplayMode>
+                        <rz:DisplayMode>Fit</rz:DisplayMode>
+                        <rz:DisplayMode>FillCrop</rz:DisplayMode>
+                        <rz:DisplayMode>OriginalOrFit</rz:DisplayMode>
+                        <rz:DisplayMode>OriginalOrFillCrop</rz:DisplayMode>
+                    </ComboBox>
+                </Grid>
+            </DockPanel>
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
+                <Label>_Background</Label>
+                <TextBox Name="backgroundPicture" Width="300" TextChanged="onTextChanged" />
+                <Button Name="browseFolderButton" Click="onSelectBackground">Browse</Button>
+            </StackPanel>
+                <DockPanel DockPanel.Dock="Top">
+                <Button Name="clearListButton" Margin="10,3,5,3" DockPanel.Dock="Right" Click="onClearList">Clear List</Button>
+                <Button Name="addExclusionButton" Margin="3" DockPanel.Dock="Right" Click="onAddExcludedFolder">Add _Exclusive</Button>
+                <Button Name="addRecursiveButton" Margin="3" DockPanel.Dock="Right" Click="onAddRecursiveFolder">Add _Recursive</Button>
+                <Button Name="addSingleButton" Margin="3" DockPanel.Dock="Right" Click="onAddSingleFolder">Add _Single</Button>
+                    <Label VerticalContentAlignment="Bottom" Target="{Binding ElementName=imageFolderDefault1}" DockPanel.Dock="Left">Picture _Folder Default:</Label>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <RadioButton Name="imageFolderDefault1" Margin="3,0" IsChecked="True" Checked="onContentChanged">1</RadioButton>
+                    <RadioButton Name="imageFolderDefault2" Margin="3,0" Checked="onContentChanged">2</RadioButton>
+                    <RadioButton Name="imageFolderDefault3" Margin="3,0" Checked="onContentChanged">3</RadioButton>
+                    <RadioButton Name="imageFolderDefault4" Margin="3,0" Checked="onContentChanged">4</RadioButton>
+                </StackPanel>
+            </DockPanel>
+            <TabControl Name="imageFolderTab">
+                <TabItem Name="imageFolder1" Header="1">
+                    <ListView Name="imageFoldersList1" Margin="3" Keyboard.KeyUp="onKeyPressedInGrid">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Path" DisplayMemberBinding="{Binding Path}" Width="400"/>
+                                <GridViewColumn Header="Inclusion" DisplayMemberBinding="{Binding Inclusion}" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </TabItem>
+                <TabItem Name="imageFolder2" Header="2" >
+                    <ListView Name="imageFoldersList2" Margin="3" Keyboard.KeyUp="onKeyPressedInGrid">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Path" DisplayMemberBinding="{Binding Path}" Width="400"/>
+                                <GridViewColumn Header="Inclusion" DisplayMemberBinding="{Binding Inclusion}" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </TabItem>
+                <TabItem Name="imageFolder3" Header="3" >
+                    <ListView Name="imageFoldersList3" Margin="3" Keyboard.KeyUp="onKeyPressedInGrid">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Path" DisplayMemberBinding="{Binding Path}" Width="400"/>
+                                <GridViewColumn Header="Inclusion" DisplayMemberBinding="{Binding Inclusion}" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </TabItem>
+                <TabItem Name="imageFolder4" Header="4" >
+                    <ListView Name="imageFoldersList4" Margin="3" Keyboard.KeyUp="onKeyPressedInGrid">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Path" DisplayMemberBinding="{Binding Path}" Width="400"/>
+                                <GridViewColumn Header="Inclusion" DisplayMemberBinding="{Binding Inclusion}" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </TabItem>
+            </TabControl>
+    </DockPanel>
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="1">
+        <Button Name="okButton" IsEnabled="False" Margin="3" MinWidth="60" IsDefault="True" Click="onSave">O_K</Button>
+        <Button Name="cancelButton" Margin="3" MinWidth="60" IsCancel="True">_Cancel</Button>
+    </StackPanel>
+    </Grid>
+</Window>

@@ -1,0 +1,15 @@
+﻿<rzp:SlidePage x:Class="RZScreenSaver.SlidePages.PhotoCollagePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:rzp="clr-namespace:RZScreenSaver.SlidePages"
+    xmlns:rzui="clr-namespace:RZScreenSaver.UI"
+    Title="PhotoCollagePage" Background="Black">
+    <Grid>
+        <Image Name="pageSurface">
+        </Image>
+        <Label Name="imagePathText" Foreground="Lime" VerticalAlignment="Bottom" Visibility="Collapsed" Panel.ZIndex="10" />
+        <Canvas Panel.ZIndex="5">
+            <rzui:Postcard x:Name="postcard" Opacity="0" />
+        </Canvas>
+    </Grid>
+</rzp:SlidePage>
