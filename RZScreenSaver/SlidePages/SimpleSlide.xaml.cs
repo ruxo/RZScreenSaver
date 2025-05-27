@@ -1,8 +1,6 @@
-using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
-using RZScreenSaver.Properties;
 
 namespace RZScreenSaver.SlidePages{
     /// <summary>
@@ -17,12 +15,10 @@ namespace RZScreenSaver.SlidePages{
             get { return imagePathText.Visibility == Visibility.Visible; }
             set{ imagePathText.Visibility = value ? Visibility.Visible : Visibility.Collapsed; }
         }
-        protected override void OnPictureSetChanged(object sender, EventArgs arg){
-            base.OnPictureSetChanged(sender, arg);
+        protected override void OnPictureSetChanged(){
             slideShowImage.Source = null;
         }
-        protected override void OnShowPicture(object sender, PictureChangedEventArgs arg){
-            base.OnShowPicture(sender, arg);
+        protected override void OnShowPicture(PictureChangedEventArgs arg){
             var image = arg.Picture;
             var orientation = GetImageOrientation(image);
 

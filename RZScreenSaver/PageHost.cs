@@ -1,3 +1,5 @@
+using System;
+using System.Reactive.Disposables;
 using System.Windows;
 using System.Windows.Media;
 using RZScreenSaver.SlidePages;
@@ -5,6 +7,11 @@ using RZScreenSaver.SlidePages;
 namespace RZScreenSaver;
 
 public class PageHost : Window{
+    protected readonly IPictureSource pictureSource;
+    protected ISlidePage? slide;
+
+    IDisposable sourceSubscription = Disposable.Empty;
+
     public PageHost(){
         Background = Brushes.Black;
         WindowStyle = WindowStyle.None;
@@ -21,19 +28,20 @@ public class PageHost : Window{
     public ISlidePage? SlidePage{
         get => slide;
         set{
-            if (slide != null){
-                pictureSource.PictureSetChanged -= slide.OnPictureSetChanged;
-                pictureSource.PictureChanged -= slide.OnShowPicture;
-            }
+            sourceSubscription.Dispose();
             Content = slide = value;
-            pictureSource.PictureChanged += slide.OnShowPicture;
-            pictureSource.PictureSetChanged += slide.OnPictureSetChanged;
+
+            if (slide is null)
+                sourceSubscription = Disposable.Empty;
+            else
+                sourceSubscription = new CompositeDisposable(
+                        pictureSource.PictureChanged.Subscribe(slide!.OnShowPicture),
+                        pictureSource.PictureSetChanged.Subscribe(_ => slide!.OnPictureSetChanged())
+                    );
         }
     }
     public void SendToBottom(){
         this.SetNoActivate();
         this.SetBottomMost();
     }
-    protected readonly IPictureSource pictureSource;
-    protected ISlidePage? slide;
 }

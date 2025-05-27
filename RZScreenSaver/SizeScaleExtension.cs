@@ -1,6 +1,5 @@
 using System;
 using System.Windows;
-using System.Windows.Media;
 
 namespace RZScreenSaver{
     static class SizeScaleExtension{

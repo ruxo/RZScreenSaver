@@ -9,11 +9,12 @@ namespace RZScreenSaver;
 /// Interaction logic for AboutRZ.xaml
 /// </summary>
 public partial class AboutRz{
+    readonly ISaverEngine saverEngine = NullSaverEngine.Default;
+
     public AboutRz() {
         InitializeComponent();
-        saverEngine = null!;
     }
-    internal AboutRz(ScreenSaverEngine.ISaverEngine engine) {
+    internal AboutRz(ISaverEngine engine) {
         InitializeComponent();
         saverEngine = engine;
         showTitleMenu.IsChecked = AppDeps.Settings.Value.ShowTitle;
@@ -57,7 +58,6 @@ public partial class AboutRz{
         saverEngine.SwitchToSet(setIndex);
     }
 
-    readonly ScreenSaverEngine.ISaverEngine saverEngine;
     void OnToggleShowTitle(object sender, RoutedEventArgs e){
         saverEngine.ToggleShowTitle();
     }

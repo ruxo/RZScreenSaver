@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reactive;
+using System.Reactive.Linq;
 using System.Windows.Media;
 
 namespace RZScreenSaver;
@@ -17,7 +19,7 @@ class TemporaryPictureSource : IPictureSource{
 
     public TemporaryPictureSource(IPictureSource mainSource, SlideMode slideMode, int delayTime){
         this.mainSource = mainSource;
-        mainSource.PictureChanged += pictureChangedDelegates;
+        PictureChanged = mainSource.PictureChanged;
         mode = slideMode;
         this.delayTime = delayTime;
     }
@@ -30,7 +32,7 @@ class TemporaryPictureSource : IPictureSource{
         else if (!mainSource.IsPaused)
             mainSource.Pause();
         tempSource = new PictureSource([new() { {currentFolder, InclusionMode.Recursive} }], 0, mode, delayTime);
-        tempSource.PictureChanged += pictureChangedDelegates;
+        PictureChanged = tempSource.PictureChanged.Merge(mainSource.PictureChanged);
         tempSource.Start();
     }
     public void RevertToMainSet(){
@@ -76,28 +78,8 @@ class TemporaryPictureSource : IPictureSource{
     public bool MoveCurrentPictureTo(string targetFolder){
         return Source.MoveCurrentPictureTo(targetFolder);
     }
-    public event EventHandler PictureSetChanged{
-        add{
-            mainSource.PictureSetChanged += value;
-            pictureSetChangedDelegates += value;
-        }
-        remove{
-            mainSource.PictureSetChanged -= value;
-            pictureSetChangedDelegates -= value;
-        }
-    }
-    public event EventHandler<PictureChangedEventArgs> PictureChanged{
-        add{
-            mainSource.PictureChanged += value;
-            pictureChangedDelegates += value;
-        }
-        remove{
-            mainSource.PictureChanged -= value;
-            pictureChangedDelegates -= value;
-        }
-    }
-    EventHandler pictureSetChangedDelegates;
-    EventHandler<PictureChangedEventArgs> pictureChangedDelegates;
+    public IObservable<Unit> PictureSetChanged => mainSource.PictureSetChanged;
+    public IObservable<PictureChangedEventArgs> PictureChanged { get; private set; }
 
     #endregion
 }

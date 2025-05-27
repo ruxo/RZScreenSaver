@@ -55,11 +55,11 @@ namespace RZScreenSaver.SlidePages{
             }
             return result;
         }
-        protected override void OnPictureSetChanged(object sender, EventArgs arg){
+        protected override void OnPictureSetChanged(){
             viewBitmap.Clear();
-            rebuildSurfaceBackground();
+            RebuildSurfaceBackground();
         }
-        protected override void OnShowPicture(object sender, PictureChangedEventArgs arg){
+        protected override void OnShowPicture(PictureChangedEventArgs arg){
             var picture = arg.Picture;
             var angle = (double) arg.Random(0, 2 *ViewAngle *AnglePrecision) / AnglePrecision -ViewAngle;
             var r3 = (double) arg.Random(1, int.MaxValue)/int.MaxValue;
@@ -106,7 +106,7 @@ namespace RZScreenSaver.SlidePages{
             var expectedArea = minCardArea + (maxCardArea - minCardArea)*sizeScale;
             return imageSize.ScaleToArea(expectedArea);
         }
-        void rebuildSurfaceBackground(){
+        void RebuildSurfaceBackground(){
             if (background != null){
                 var imageRenderer = new Image{Source = background, Stretch = Stretch.UniformToFill};
                 imageRenderer.Measure(new Size(viewBitmap.Width,viewBitmap.Height));
@@ -117,7 +117,7 @@ namespace RZScreenSaver.SlidePages{
         }
         void resetViewBitmaps(Size result) {
             viewBitmap = new RenderTargetBitmap(pageWidth, pageHeight, 96, 96, PixelFormats.Default);
-            rebuildSurfaceBackground();
+            RebuildSurfaceBackground();
 
             var area = result.Width*result.Height;
             minCardArea = area*SquareCardSize.Min*SquareCardSize.Min;
@@ -132,6 +132,6 @@ namespace RZScreenSaver.SlidePages{
         double minCardArea, maxCardArea;
         RenderTargetBitmap viewBitmap;
         WriteableBitmap currentViewBitmap;
-        BitmapSource background;
+        BitmapSource? background;
     }
 }

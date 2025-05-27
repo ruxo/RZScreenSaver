@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
-using RZScreenSaver.Properties;
 using Application=System.Windows.Application;
 using KeyEventArgs=System.Windows.Input.KeyEventArgs;
 using KeyEventHandler=System.Windows.Input.KeyEventHandler;

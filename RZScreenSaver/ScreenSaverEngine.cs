@@ -1,10 +1,13 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Threading;
 using RZScreenSaver.SlidePages;
 using Application=System.Windows.Application;
 using Cursor=System.Windows.Forms.Cursor;
@@ -12,8 +15,23 @@ using KeyEventArgs=System.Windows.Input.KeyEventArgs;
 
 namespace RZScreenSaver;
 
+public interface ISaverEngine{
+    void SwitchToSet(int setIndex);
+    void ToggleShowTitle();
+}
+
+sealed class NullSaverEngine : ISaverEngine
+{
+    public static readonly ISaverEngine Default = new NullSaverEngine();
+
+    public void SwitchToSet(int setIndex) { }
+    public void ToggleShowTitle() { }
+}
+
 sealed class ScreenSaverEngine{
+
     #region Save Screen
+
     public Application? SaveScreen(){
         savers = CreatePageHostAndRun(ScreenSaverFactory, ScreenSaverConfigurer);
         Cursor.Hide();
@@ -42,14 +60,34 @@ sealed class ScreenSaverEngine{
 
     #region Run As Background
 
-    public Application RunAsBackground() {
+    public Application? RunAsBackground() {
         var pictureSet = AppDeps.Settings.Value.PicturePaths;
         var selectedIndex = AppDeps.Settings.Value.BackgroundPictureSetSelected;
 
         pictureSource = new TemporaryPictureSource(pictureSet, selectedIndex, AppDeps.Settings.Value.SlideMode, AppDeps.Settings.Value.SlideShowDelay);
         var slideShowList = CreatePageHostAndRun(PageHostFactory, PageHostConfigurer, pictureSource);
 
-        return BackgroundSlideShowEngine.Start(pictureSource, slideShowList);
+        var screenSaverCheck = new DispatcherTimer(DispatcherPriority.Background) {
+            Interval = TimeSpan.FromSeconds(5)
+        };
+        screenSaverCheck.Tick += (_, _) => {
+            var success = Win32.SystemParametersInfo(Win32.SPI_GETSCREENSAVERRUNNING, 0, out var isRunning, 0);
+            Debug.Assert(success);
+            if (isRunning ^ pictureSource.IsPaused)
+                if (isRunning)
+                    pictureSource.Pause();
+                else
+                    pictureSource.Resume();
+        };
+        screenSaverCheck.Start();
+
+        RunAboutDialog(pictureSource, slideShowList);
+        return new Application{ShutdownMode = ShutdownMode.OnExplicitShutdown};
+    }
+
+    static void RunAboutDialog(TemporaryPictureSource pictureSource, PageHost[] slideShowList) {
+        var aboutDialog = new AboutRz(new BackgroundSlideShowEngine(pictureSource, slideShowList));
+        aboutDialog.Hide();
     }
 
     static PageHost PageHostFactory(IPictureSource source, Rect rect, ISlidePage page)
@@ -64,6 +102,7 @@ sealed class ScreenSaverEngine{
         host.SendToBottom();
     }
     #endregion
+
     public Application? PreviewScreen(IntPtr previewWindow){
         Win32.RECT parentRect;
         Win32.GetWindowRect(previewWindow, out parentRect);
@@ -73,7 +112,7 @@ sealed class ScreenSaverEngine{
                                       previewWindow, false);
         var source = CreateSourceFromSettings();
         var slidePage = SlidePageFactory.Create(AppDeps.Settings.Value.SaverMode).Create(AppDeps.Settings.Value.DisplayMode);
-        source.PictureChanged += slidePage.OnShowPicture;
+        source.PictureChanged.Subscribe(e => slidePage.OnShowPicture(e));
         wpfWin32.RootVisual = (Visual) slidePage;
         wpfWin32.Disposed += delegate { Application.Current.Shutdown(); };
         source.Start();
@@ -87,6 +126,7 @@ sealed class ScreenSaverEngine{
         configDialog.ShowDialog();
         return null;
     }
+
     T[] CreatePageHostAndRun<T>(Func<IPictureSource,Rect,ISlidePage,T> hostCreator, Action<T> hostConfigurer) where T : PageHost
         => CreatePageHostAndRun(hostCreator, hostConfigurer, CreateSourceFromSettings());
 
@@ -122,10 +162,6 @@ sealed class ScreenSaverEngine{
             AppDeps.Settings.Value.LastShownIndex = pictureSource.PictureIndex;
             AppDeps.Settings.Save();
         }
-    }
-    public interface ISaverEngine{
-        void SwitchToSet(int setIndex);
-        void ToggleShowTitle();
     }
     ScreenSaver[] savers;
     TemporaryPictureSource pictureSource;

@@ -6,7 +6,6 @@ using System.Windows;
 namespace RZScreenSaver;
 
 enum MainCommand{
-    Invalid,
     ShowSaver,
     ConfigureSaver,
     PreviewSaver,
@@ -14,7 +13,7 @@ enum MainCommand{
 }
 class InvalidArgumentException(int code, string message) : Exception(message)
 {
-    public int ExitCode { get; private set; } = code;
+    public int ExitCode => code;
 }
 
 public static class MainApp{
@@ -25,7 +24,6 @@ public static class MainApp{
     public static int Rand(){
         return r.Next();
     }
-    public const int InvalidArgumentError = -1;
     public const int InvalidWindowHandleError = -2;
 
     [STAThread]
@@ -74,7 +72,7 @@ public static class MainApp{
             MainCommand.ConfigureSaver  => w.ConfigureSaver(previewWindow),
             MainCommand.RunAsBackground => w.RunAsBackground(),
 
-            _                           => throw new NotSupportedException("FATAL: Unhandle main command " + command)
+            _ => throw new NotSupportedException("FATAL: Unhandle main command " + command)
         } ?? new Application();
         return a.Run();
     }
@@ -125,7 +123,7 @@ public static class MainApp{
         }
     }
     static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e){
-        MessageBox.Show(e.ExceptionObject.ToString(), "Unhandled Exception", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+        Trace.WriteLine("Unhandled exception: " + e.ExceptionObject);
     }
-    static readonly Random r = new Random();
+    static readonly Random r = new();
 }

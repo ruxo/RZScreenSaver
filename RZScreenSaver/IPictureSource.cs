@@ -1,4 +1,5 @@
 using System;
+using System.Reactive;
 using System.Windows.Media;
 
 namespace RZScreenSaver;
@@ -19,6 +20,6 @@ public interface IPictureSource{
     bool DeleteCurrentPicture();
     bool MoveCurrentPictureTo(string targetFileAndFolder);
 
-    event EventHandler PictureSetChanged;
-    event EventHandler<PictureChangedEventArgs> PictureChanged;
+    IObservable<Unit> PictureSetChanged { get; }
+    IObservable<PictureChangedEventArgs> PictureChanged { get; }
 }

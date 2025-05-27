@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reactive;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -35,6 +38,9 @@ public class PictureSource : IPictureSource{
     readonly SlideMode slideMode;
     readonly IReadOnlyList<FolderCollection> picturePaths;
 
+    readonly Subject<Unit> pictureSetChanged = new();
+    readonly Subject<PictureChangedEventArgs> pictureChanged = new();
+
     List<ImagePath> pictureList = new();
     Queue<int> slideOrder = new();
     int currentPictureIndex;
@@ -48,9 +54,11 @@ public class PictureSource : IPictureSource{
         pictureSetSelected = selectedPictureSet;
         this.slideMode = slideMode;
 
+        PictureSetChanged = pictureSetChanged.ObserveOn(Dispatcher.CurrentDispatcher);
+        PictureChanged = pictureChanged.ObserveOn(Dispatcher.CurrentDispatcher);
+
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(slideDelay) };
         timer.Tick += ChangePictureEvent;
-        Debug.Assert(!timer.IsEnabled);
 
         if (pictureSetSelected is not null)
             RegeneratePictureList(picturePaths[pictureSetSelected!.Value]);
@@ -163,14 +171,14 @@ public class PictureSource : IPictureSource{
         ApplySlideMode();
 
         if (IsStarted){
-            var handler = PictureSetChanged;
-            if (handler != null)
-                handler(this, EventArgs.Empty);
+            pictureSetChanged.OnNext(Unit.Default);
             NotifyNextImage();
         }
     }
-    public event EventHandler PictureSetChanged;
-    public event EventHandler<PictureChangedEventArgs> PictureChanged;
+
+    public IObservable<Unit> PictureSetChanged { get; }
+    public IObservable<PictureChangedEventArgs> PictureChanged { get; }
+
     void ApplySlideMode(){
         if (pictureList.Count == 0)
             return;
@@ -250,10 +258,7 @@ public class PictureSource : IPictureSource{
         } while (image == null && pictureList.Count > 0);
         if (image != null){
             currentPicture = image;
-            var @event = PictureChanged;
-            if (@event != null){
-                @event(this, new PictureChangedEventArgs(fileName, fileDate, image));
-            }
+            pictureChanged.OnNext(new PictureChangedEventArgs(fileName, fileDate, image));
         }else{
             Debug.Assert(pictureList.Count == 0, "Picture list supposes to be all removed because the invalid image file.");
             timer.Stop();
@@ -302,10 +307,10 @@ public class PictureSource : IPictureSource{
             IEnumerable<string> fileList;
             switch (folder.Inclusion){
                 case InclusionMode.Recursive:
-                    fileList = getImageFileRecursive(folder.Path, excludedFolders);
+                    fileList = GetImageFileRecursive(folder.Path, excludedFolders);
                     break;
                 case InclusionMode.Single:
-                    fileList = getImageFileSingle(folder.Path);
+                    fileList = GetImageFileSingle(folder.Path);
                     break;
                 case InclusionMode.Exclude:
                     continue;
@@ -319,20 +324,21 @@ public class PictureSource : IPictureSource{
             }
         }
     }
-    static IEnumerable<string> getImageFileSingle(string path){
-        return from file in Directory.GetFiles(path)
-               where SupportedImage.Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase)
-               select file;
-    }
-    static IEnumerable<string> getImageFileRecursive(string path, string[] excludedFolders){
+
+    static IEnumerable<string> GetImageFileSingle(string path)
+        => from file in Directory.GetFiles(path)
+           where SupportedImage.Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase)
+           select file;
+
+    static IEnumerable<string> GetImageFileRecursive(string path, string[] excludedFolders){
         if (Array.FindIndex(excludedFolders, folder => path.StartsWith(folder, StringComparison.OrdinalIgnoreCase)) != -1){
             Debug.WriteLine("Exclude: " + path);
-            return new string[0];
+            return [];
         }
         var subImageFiles = from dir in Directory.GetDirectories(path)
-                            from file in getImageFileRecursive(dir, excludedFolders)
+                            from file in GetImageFileRecursive(dir, excludedFolders)
                             select file;
-        return getImageFileSingle(path).Union(subImageFiles);
+        return GetImageFileSingle(path).Union(subImageFiles);
     }
     #region Structures
     struct ImagePath{
