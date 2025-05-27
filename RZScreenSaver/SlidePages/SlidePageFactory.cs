@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace RZScreenSaver.SlidePages{
     static class SlidePageFactory{
-        static public ICreator Create(SaverMode mode){
+        public static ICreator Create(SaverMode mode){
             ICreator creator;
             switch (mode){
             case SaverMode.SlideShow:

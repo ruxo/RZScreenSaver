@@ -10,7 +10,7 @@ namespace RZScreenSaver.Graphics.ColorSpaces{
         public const int Hue = 0, Saturation = 1, Lightness = 2, Alpha = 3;
         #region ctors
         public Hsla32(int width, int height) : base(width, height, Dpp){}
-        static public Hsla32 FromPbra32(byte[] data, int width){
+        public static Hsla32 FromPbra32(byte[] data, int width){
             Debug.Assert(data.Length % width == 0);
 
             const int red = Rgba32.Red, green = Rgba32.Green, blue = Rgba32.Blue;
@@ -40,11 +40,11 @@ namespace RZScreenSaver.Graphics.ColorSpaces{
                     hsl[pixel + Hue] = hsl[pixel + Saturation] = 0;
                 }else{
                     //Chromatic data...
-                    hsl[pixel + Saturation] = (light < 0.5)? diffColorness/(maxColorness + minColorness) : diffColorness/(2 - maxColorness - minColorness);
+                    hsl[pixel + Saturation] = light < 0.5? diffColorness/(maxColorness + minColorness) : diffColorness/(2 - maxColorness - minColorness);
 
-                    var del_R = (((maxColorness - realRed) / 6) + (diffColorness / 2)) / diffColorness;
-                    var del_G = (((maxColorness - realGreen) / 6) + (diffColorness / 2)) / diffColorness;
-                    var del_B = (((maxColorness - realBlue) / 6) + (diffColorness / 2)) / diffColorness;
+                    var del_R = ((maxColorness - realRed) / 6 + diffColorness / 2) / diffColorness;
+                    var del_G = ((maxColorness - realGreen) / 6 + diffColorness / 2) / diffColorness;
+                    var del_B = ((maxColorness - realBlue) / 6 + diffColorness / 2) / diffColorness;
 
                     if (realRed == maxColorness)
                         hsl[pixel + Hue] = del_B - del_G;

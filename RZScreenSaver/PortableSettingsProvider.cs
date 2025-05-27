@@ -89,9 +89,9 @@ namespace RZScreenSaver{
         }
         string getValue(SettingsProperty setting){
             var propertyNode = getSettingsNode(setting, setting.Name);
-            var ret = (propertyNode != null)
+            var ret = propertyNode != null
                           ? propertyNode.InnerText
-                          : (setting.DefaultValue != null) ? setting.DefaultValue.ToString() : String.Empty;
+                          : setting.DefaultValue != null ? setting.DefaultValue.ToString() : String.Empty;
             return ret;
         }
         void setValue(SettingsPropertyValue propVal){

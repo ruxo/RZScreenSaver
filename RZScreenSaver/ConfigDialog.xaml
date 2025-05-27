@@ -65,7 +65,7 @@
                 <Button Name="clearListButton" Margin="10,3,5,3" DockPanel.Dock="Right" Click="onClearList">Clear List</Button>
                 <Button Name="addExclusionButton" Margin="3" DockPanel.Dock="Right" Click="onAddExcludedFolder">Add _Exclusive</Button>
                 <Button Name="addRecursiveButton" Margin="3" DockPanel.Dock="Right" Click="onAddRecursiveFolder">Add _Recursive</Button>
-                <Button Name="addSingleButton" Margin="3" DockPanel.Dock="Right" Click="onAddSingleFolder">Add _Single</Button>
+                <Button Name="addSingleButton" Margin="3" DockPanel.Dock="Right" Click="OnAddSingleFolder">Add _Single</Button>
                     <Label VerticalContentAlignment="Bottom" Target="{Binding ElementName=imageFolderDefault1}" DockPanel.Dock="Left">Picture _Folder Default:</Label>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <RadioButton Name="imageFolderDefault1" Margin="3,0" IsChecked="True" Checked="onContentChanged">1</RadioButton>

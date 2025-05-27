@@ -59,7 +59,7 @@ namespace RZScreenSaver.SlidePages{
         }
         protected override void OnShowPicture(object sender, PictureChangedEventArgs arg){
             var picture = arg.Picture;
-            var angle = ((double) arg.Random(0, 2 *ViewAngle *AnglePrecision) / AnglePrecision) -ViewAngle;
+            var angle = (double) arg.Random(0, 2 *ViewAngle *AnglePrecision) / AnglePrecision -ViewAngle;
             var r3 = (double) arg.Random(1, int.MaxValue)/int.MaxValue;
             var orientation = GetImageOrientation(picture);
             var newPictureSize = getNiceSize(picture, r3, orientation);

@@ -23,26 +23,26 @@ namespace RZScreenSaver{
 
         public const uint SPI_GETSCREENSAVERRUNNING = 0x0072;
 
-        static public readonly IntPtr HWND_BOTTOM = new IntPtr(1);
+        public static readonly IntPtr HWND_BOTTOM = new IntPtr(1);
 
         [DllImport("user32.dll")]
-        static public extern IntPtr GetWindow(IntPtr hwnd, uint wCmd);
+        public static extern IntPtr GetWindow(IntPtr hwnd, uint wCmd);
         [DllImport("user32.dll")]
-        static public extern bool IsWindowVisible(IntPtr hwnd);
+        public static extern bool IsWindowVisible(IntPtr hwnd);
         [DllImport("user32.dll")]
-        static public extern bool SetForegroundWindow(IntPtr hwnd);
+        public static extern bool SetForegroundWindow(IntPtr hwnd);
         [DllImport("user32.dll")]
-        static public extern bool SetWindowPos(IntPtr hwnd, IntPtr hwndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
+        public static extern bool SetWindowPos(IntPtr hwnd, IntPtr hwndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
         [DllImport("user32.dll")]
-        static public extern IntPtr SetParent(IntPtr child, IntPtr parent);
+        public static extern IntPtr SetParent(IntPtr child, IntPtr parent);
         [DllImport("user32.dll", SetLastError = true)]
-        static public extern int SetWindowLong(IntPtr hwnd, int index, int value);
+        public static extern int SetWindowLong(IntPtr hwnd, int index, int value);
         [DllImport("user32.dll", SetLastError = true)]
-        static public extern int GetWindowLong(IntPtr hwnd, int index);
+        public static extern int GetWindowLong(IntPtr hwnd, int index);
         [DllImport("user32.dll", PreserveSig = false)]
-        static public extern void GetWindowRect(IntPtr hwnd, out RECT rect);
+        public static extern void GetWindowRect(IntPtr hwnd, out RECT rect);
         [DllImport("user32.dll")]
-        static public extern bool SystemParametersInfo(uint uiAction, uint uiParam, out bool boolValue, uint fwInit);
+        public static extern bool SystemParametersInfo(uint uiAction, uint uiParam, out bool boolValue, uint fwInit);
         #region Structures
         [StructLayout(LayoutKind.Sequential)]
         public struct MARGINS{

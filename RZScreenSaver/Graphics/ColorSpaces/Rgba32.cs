@@ -9,7 +9,7 @@ namespace RZScreenSaver.Graphics.ColorSpaces{
         public const int Red = 2, Green = 1, Blue = 0, Alpha = 3;
         #region ctors
         public Rgba32(int width, int height) : base(width, height, Dpp){}
-        static public Rgba32 FromHsl(Hsla32 source){
+        public static Rgba32 FromHsl(Hsla32 source){
             var result = new Rgba32(source.Width, source.Height);
             var rgb = result.Data;
             var hsl = source.Data;
@@ -26,7 +26,7 @@ namespace RZScreenSaver.Graphics.ColorSpaces{
                 }else{
                     var var2 = lightness < 0.5
                                ? lightness*(1.0F + saturation)
-                               : (lightness + saturation) - (saturation*lightness);
+                               : lightness + saturation - saturation*lightness;
                     var var1 = 2 * lightness - var2;
 
                     rgb[i + Red] = (byte)(byte.MaxValue * hue2Rgb(var1, var2, hue + 1F / 3));
@@ -39,10 +39,10 @@ namespace RZScreenSaver.Graphics.ColorSpaces{
         static float hue2Rgb(float v1, float v2, float vH){
             if (vH < 0) vH += 1.0F;
             if (vH > 1) vH -= 1.0F;
-            if ((6 * vH) < 1) return (v1 + (v2 - v1) * 6 * vH);
-            if ((2 * vH) < 1) return (v2);
-            if ((3 * vH) < 2) return (v1 + (v2 - v1) * ((float)(2.0 / 3.0) - vH) * 6);
-            return (v1);
+            if (6 * vH < 1) return v1 + (v2 - v1) * 6 * vH;
+            if (2 * vH < 1) return v2;
+            if (3 * vH < 2) return v1 + (v2 - v1) * ((float)(2.0 / 3.0) - vH) * 6;
+            return v1;
         }
         #endregion
     }

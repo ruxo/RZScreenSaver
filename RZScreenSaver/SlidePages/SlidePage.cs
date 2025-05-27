@@ -37,7 +37,7 @@ namespace RZScreenSaver.SlidePages{
         protected virtual void OnPictureSetChanged(object sender, EventArgs arg){}
         protected virtual void OnShowPicture(object sender, PictureChangedEventArgs arg){}
 
-        static protected string FormatImageDescription(ImageSource image, string path, DateTime fileDate, int? orientation){
+        protected static string FormatImageDescription(ImageSource image, string path, DateTime fileDate, int? orientation){
             if (orientation == null || orientation.Value == 0)
                 return string.Format("[{0}x{1}] {2} {3}", image.Width.ToString("F0"),
                                      image.Height.ToString("F0"),
@@ -48,7 +48,7 @@ namespace RZScreenSaver.SlidePages{
                     orientation,
                     fileDate.ToString("G"), path);
         }
-        static protected int? GetImageOrientation(ImageSource image){
+        protected static int? GetImageOrientation(ImageSource image){
             const string exifOrientation = "System.Photo.Orientation";
             var bitmapMeta = image.Metadata as BitmapMetadata;
             if (bitmapMeta == null || !bitmapMeta.ContainsQuery(exifOrientation))
@@ -74,10 +74,10 @@ namespace RZScreenSaver.SlidePages{
                 return null;
             }
         }
-        static protected void GetImageSizeByOrientation(ImageSource image, int? orientation, out Size imageSize){
+        protected static void GetImageSizeByOrientation(ImageSource image, int? orientation, out Size imageSize){
             imageSize = IsLandscape(orientation) ? new Size(image.Width, image.Height) : new Size(image.Height, image.Width);
         }
-        static protected bool IsLandscape(int? orientation){
+        protected static bool IsLandscape(int? orientation){
             return orientation == null || orientation.Value == 0 || orientation.Value == 180;
         }
 
