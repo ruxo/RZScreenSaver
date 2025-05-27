@@ -1,10 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Input;
-using RZScreenSaver.Properties;
 using KeyEventArgs=System.Windows.Input.KeyEventArgs;
 using ListView=System.Windows.Controls.ListView;
 using MessageBox=System.Windows.MessageBox;
@@ -17,7 +17,16 @@ namespace RZScreenSaver;
 /// </summary>
 partial class ConfigDialog{
     const int NumberOfPictureSet = 4;
+
+    readonly RadioButton[] defaultRadioButtons;
+    readonly ListView[] imageFolderList;
+    readonly List<FolderCollection> folderSet = new();
+
+    int? selectedIndex;
+    GlassHelper glassMaker = null!;
+
     #region ctors
+
     public ConfigDialog() {
         InitializeComponent();
         defaultRadioButtons = [imageFolderDefault1, imageFolderDefault2, imageFolderDefault3, imageFolderDefault4];
@@ -28,11 +37,13 @@ partial class ConfigDialog{
         // enable only there are more than 1 monitor.
         asMixedMode.IsEnabled = Screen.AllScreens.Length > 1;
 
-        slideDelayInput.ValueChanged += delegate { enableButtons(true); };
+        slideDelayInput.ValueChanged += delegate { EnableButtons(true); };
         LoadSettingsToUi();
-        enableButtons(false);
+        EnableButtons(false);
     }
+
     #endregion
+
     protected override void OnSourceInitialized(EventArgs e) {
         base.OnSourceInitialized(e);
         glassMaker = new GlassHelper(this, new Thickness(-1));
@@ -54,24 +65,27 @@ partial class ConfigDialog{
     #region Save/Restore Settings
 
     void LoadSettingsToUi(){
-        slideDelayInput.Value = Settings.Default.SlideShowDelay;
-        slideModeList.SelectedItem = Settings.Default.SlideMode;
-        displayModeList.SelectedItem = Settings.Default.DisplayMode;
-        folderDialog.SelectedPath = Settings.Default.LastSelectedFolder;
+        slideDelayInput.Value = AppDeps.Settings.Value.SlideShowDelay;
+        slideModeList.SelectedItem = AppDeps.Settings.Value.SlideMode;
+        displayModeList.SelectedItem = AppDeps.Settings.Value.DisplayMode;
+        folderDialog.SelectedPath = AppDeps.Settings.Value.LastSelectedFolder;
 
-        folderSet = Settings.Default.PicturePaths ?? new FolderCollectionSet();
-        folderSet.SelectedIndex = Settings.Default.PictureSetSelected;
+        folderSet.AddRange(AppDeps.Settings.Value.PicturePaths);
+        selectedIndex = AppDeps.Settings.Value.PictureSetSelected;
+
         for(int setIndex=0; setIndex < NumberOfPictureSet; ++setIndex)
             if (setIndex >= folderSet.Count)
                 folderSet.Add(new FolderCollection());
             else
                 foreach(var item in folderSet[setIndex])
                     imageFolderList[setIndex].Items.Add(item);
-        Debug.Assert(folderSet.SelectedIndex < NumberOfPictureSet);
-        defaultRadioButtons[folderSet.SelectedIndex].IsChecked = true;
 
-        LoadUiSaverMode(Settings.Default.SaverMode);
-        backgroundPicture.Text = Settings.Default.BackgroundPicturePath;
+        defaultRadioButtons[selectedIndex ?? 0].IsChecked = true;
+
+        LoadUiSaverMode(AppDeps.Settings.Value.SaverMode);
+
+        if (AppDeps.Settings.Value.BackgroundPicturePath is {} path)
+            backgroundPicture.Text = path;
     }
 
     void LoadUiSaverMode(SaverMode mode){
@@ -88,31 +102,31 @@ partial class ConfigDialog{
             default:
                 asSlideShowMode.IsChecked = true;
                 Debug.Write("Saver mode ");
-                Debug.Write(Settings.Default.SaverMode);
+                Debug.Write(AppDeps.Settings.Value.SaverMode);
                 Debug.WriteLine(" is not handled!!");
                 break;
         }
     }
-    void storeUiToSettings(){
+    void StoreUiToSettings(){
         var defaultSetIndex = Array.FindIndex(defaultRadioButtons, radio => radio.IsChecked != null && radio.IsChecked.Value);
         Debug.Assert(defaultSetIndex != -1);
 
-        folderSet.SelectedIndex = defaultSetIndex;
+        selectedIndex = defaultSetIndex;
 
-        Settings.Default.SlideShowDelay = (int) slideDelayInput.Value;
-        Settings.Default.SlideMode = (SlideMode) slideModeList.SelectedItem;
-        Settings.Default.DisplayMode = (DisplayMode) displayModeList.SelectedItem;
-        Settings.Default.PicturePaths = folderSet;
-        Settings.Default.LastSelectedFolder = folderDialog.SelectedPath;
-        Settings.Default.SaverMode = (bool) asSlideShowMode.IsChecked
+        AppDeps.Settings.Value.SlideShowDelay = (int) slideDelayInput.Value;
+        AppDeps.Settings.Value.SlideMode = (SlideMode) slideModeList.SelectedItem;
+        AppDeps.Settings.Value.DisplayMode = (DisplayMode) displayModeList.SelectedItem;
+        AppDeps.Settings.Value.PicturePaths = folderSet;
+        AppDeps.Settings.Value.LastSelectedFolder = folderDialog.SelectedPath;
+        AppDeps.Settings.Value.SaverMode =  asSlideShowMode.IsChecked ?? false
                                          ? SaverMode.SlideShow
-                                         : (bool) asPhotoCollageMode.IsChecked ? SaverMode.PhotoCollage : SaverMode.Mixed;
-        Settings.Default.PictureSetSelected = folderSet.SelectedIndex;
-        Settings.Default.BackgroundPicturePath = backgroundPicture.Text;
+                                         : asPhotoCollageMode.IsChecked ?? false ? SaverMode.PhotoCollage : SaverMode.Mixed;
+        AppDeps.Settings.Value.PictureSetSelected = selectedIndex;
+        AppDeps.Settings.Value.BackgroundPicturePath = backgroundPicture.Text;
     }
     #endregion
 
-    void enableButtons(bool enable){
+    void EnableButtons(bool enable){
         if (okButton != null)
             okButton.IsEnabled = enable;
     }
@@ -122,7 +136,7 @@ partial class ConfigDialog{
                 var folder = currentFolderList.Add(folderDialog.SelectedPath, mode);
                 currentFolderListView.Items.Add(folder);
             }
-            enableButtons(true);
+            EnableButtons(true);
         }
     }
 
@@ -134,13 +148,13 @@ partial class ConfigDialog{
                             MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes){
             currentFolderListView.Items.Clear();
             currentFolderList.Clear();
-            enableButtons(true);
+            EnableButtons(true);
         }
     }
     void onContentChanged(object sender,RoutedEventArgs e) {
         Debug.WriteLine("Event:" + e + ", Source=" + e.Source);
         var selectionArg = e as SelectionChangedEventArgs;
-        enableButtons(selectionArg == null || selectionArg.RemovedItems.Count > 0);
+        EnableButtons(selectionArg == null || selectionArg.RemovedItems.Count > 0);
         if (selectionArg != null){
             Debug.WriteLine("Add Items = " + selectionArg.AddedItems.Count);
             if (selectionArg.AddedItems.Count > 0)
@@ -150,9 +164,9 @@ partial class ConfigDialog{
                 Debug.WriteLine("\tFirst Item: " + selectionArg.RemovedItems[0]);
         }
     }
-    void onSave(object sender, RoutedEventArgs e){
-        storeUiToSettings();
-        Settings.Default.Save();
+    void OnSave(object sender, RoutedEventArgs e){
+        StoreUiToSettings();
+        AppDeps.Settings.Save();
         DialogResult = true;
     }
     void onAddExcludedFolder(object sender, RoutedEventArgs e){
@@ -172,7 +186,7 @@ partial class ConfigDialog{
                 currentFolderListView.Items.Remove(folder);
                 currentFolderList.Remove(folder);
             }
-            enableButtons(true);
+            EnableButtons(true);
         }
     }
     void onSelectBackground(object sender, RoutedEventArgs e){
@@ -186,25 +200,21 @@ partial class ConfigDialog{
         var result = fileDialog.ShowDialog();
         if ((bool)result && !fileDialog.FileName.Equals(backgroundPicture.Text, StringComparison.OrdinalIgnoreCase)){
             backgroundPicture.Text = fileDialog.FileName;
-            enableButtons(true);
+            EnableButtons(true);
         }
     }
     void onTextChanged(object sender, TextChangedEventArgs e){
-        enableButtons(true);
+        EnableButtons(true);
     }
 
     #endregion
 
-    readonly RadioButton[] defaultRadioButtons;
-    readonly ListView[] imageFolderList;
-    FolderCollectionSet folderSet;
-    GlassHelper glassMaker;
-    readonly FolderBrowserDialog folderDialog = new FolderBrowserDialog{
+    readonly FolderBrowserDialog folderDialog = new() {
         Description = "Select a folder containing any picture.",
         ShowNewFolderButton = false,
     };
-    void onChangeSlideMode(object sender, SelectionChangedEventArgs e){
-        Settings.Default.LastShownIndex = 0;
+    void OnChangeSlideMode(object sender, SelectionChangedEventArgs e){
+        AppDeps.Settings.Value.LastShownIndex = 0;
         onContentChanged(sender, e);
     }
 }

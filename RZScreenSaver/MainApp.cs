@@ -1,9 +1,7 @@
 using System;
-using System.Configuration;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Windows;
-using RZScreenSaver.Properties;
 
 namespace RZScreenSaver;
 
@@ -45,14 +43,8 @@ public static class MainApp{
         for(int i=0; i < arg.Length; ++i)
             Debug.WriteLine($"arg #{i.ToString()} = {arg[i]}");
 
-        foreach (var provider in Settings.Default.Providers){
-            Debug.WriteLine("Provider = " + provider.ToString());
-            var localProvider = provider as LocalFileSettingsProvider;
-            if (localProvider != null)
-                Debug.WriteLine("Name = " + localProvider.ApplicationName);
-        }
-        if (Settings.Default.PicturePaths != null)
-            foreach (var set in Settings.Default.PicturePaths){
+        if (AppDeps.Settings.Value.PicturePaths.Count > 0)
+            foreach (var set in AppDeps.Settings.Value.PicturePaths){
                 Debug.Write("Begin Set...");
                 foreach(var folder in set){
                     var inclusion = folder.Inclusion == InclusionMode.Exclude

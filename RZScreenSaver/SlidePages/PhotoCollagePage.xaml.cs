@@ -8,7 +8,6 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using RZScreenSaver.Graphics;
 using RZScreenSaver.Graphics.ColorSpaces;
-using RZScreenSaver.Properties;
 
 namespace RZScreenSaver.SlidePages{
     /// <summary>
@@ -18,14 +17,17 @@ namespace RZScreenSaver.SlidePages{
         #region ctors
         static PhotoCollagePage(){
             // TODO: Decouple this class from Settings!
-            ViewAngle = Settings.Default.PhotoCollageAngle;
+            ViewAngle = AppDeps.Settings.Value.PhotoCollageAngle;
             SquareCardSize = new Range
-                             {Min = Settings.Default.MinSquareCardSize, Max = Settings.Default.MaxSquareCardSize};
+                             {Min = AppDeps.Settings.Value.MinSquareCardSize, Max = AppDeps.Settings.Value.MaxSquareCardSize};
         }
         public PhotoCollagePage() {
             InitializeComponent();
+            if (AppDeps.Settings.Value.BackgroundPicturePath is not { } picturePath)
+                return;
+
             try{
-                background = new BitmapImage(new Uri(Settings.Default.BackgroundPicturePath, UriKind.RelativeOrAbsolute));
+                background = new BitmapImage(new Uri(picturePath, UriKind.RelativeOrAbsolute));
             }
             catch (FileNotFoundException e){
                 Trace.Write("Background image is invalid: ");
@@ -100,7 +102,7 @@ namespace RZScreenSaver.SlidePages{
         Size getNiceSize(ImageSource image, double sizeScale, int? orientation){
             Size imageSize;
             GetImageSizeByOrientation(image, orientation, out imageSize);
-            
+
             var expectedArea = minCardArea + (maxCardArea - minCardArea)*sizeScale;
             return imageSize.ScaleToArea(expectedArea);
         }

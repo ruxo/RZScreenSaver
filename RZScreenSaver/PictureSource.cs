@@ -31,36 +31,45 @@ public class PictureChangedEventArgs : EventArgs{
 public class PictureSource : IPictureSource{
     static readonly string[] SupportedImage = [".bmp", ".gif", ".jpg", ".jpeg", ".png", ".tiff", ".ico"];
 
+    readonly DispatcherTimer timer;
+    readonly SlideMode slideMode;
+    readonly IReadOnlyList<FolderCollection> picturePaths;
+
+    List<ImagePath> pictureList = new();
+    Queue<int> slideOrder = new();
+    int currentPictureIndex;
+    ImageSource? currentPicture;
+    int? pictureSetSelected;
+
     #region ctors
-    public PictureSource(FolderCollectionSet folderSet, SlideMode slideMode, int slideDelay){
-        this.folderSet = folderSet;
+
+    public PictureSource(IReadOnlyList<FolderCollection> paths, int? selectedPictureSet, SlideMode slideMode, int slideDelay){
+        picturePaths = paths;
+        pictureSetSelected = selectedPictureSet;
         this.slideMode = slideMode;
 
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(slideDelay) };
-        timer.Tick += changePictureEvent;
+        timer.Tick += ChangePictureEvent;
         Debug.Assert(!timer.IsEnabled);
 
-        regeneratePictureList(folderSet.Default);
-        applySlideMode();
+        if (pictureSetSelected is not null)
+            RegeneratePictureList(picturePaths[pictureSetSelected!.Value]);
+
+        ApplySlideMode();
     }
 
     #endregion
 
     #region Engine Control
 
-    public int PictureIndex{
-        get { return pictureList.Count - slideOrder.Count; }
-    }
-    public bool IsPaused{
-        get { return !IsStarted && pauseCall > 0; }
-    }
-    public bool IsStarted{
-        get { return timer.IsEnabled; }
-    }
+    public int PictureIndex => pictureList.Count - slideOrder.Count;
+    public bool IsPaused => !IsStarted && pauseCall > 0;
+    public bool IsStarted => timer.IsEnabled;
+
     public void Start(){
         if (!IsStarted && pictureList.Count > 0){
             timer.Start();
-            notifyNextImage();
+            NotifyNextImage();
         }
         pauseCall = 0;
     }
@@ -90,7 +99,7 @@ public class PictureSource : IPictureSource{
         if (slideMode != SlideMode.Random)
             // random order doesn't make sense to be reponsitioned.
             if (slideOrder.Count < lastPosition)
-                applySlideMode();
+                ApplySlideMode();
             else
                 for(int discardCount=0; discardCount < lastPosition; ++discardCount)
                     slideOrder.Dequeue();
@@ -146,25 +155,27 @@ public class PictureSource : IPictureSource{
         }
         return false;
     }
-    public void SwitchToSet(int setIndex){
-        folderSet.SelectedIndex = setIndex;
-        regeneratePictureList(folderSet.Default);
-        applySlideMode();
+    public void SwitchToSet(int setIndex) {
+        if (pictureSetSelected is null) return;
+
+        pictureSetSelected = setIndex;
+        RegeneratePictureList(picturePaths[setIndex]);
+        ApplySlideMode();
 
         if (IsStarted){
             var handler = PictureSetChanged;
             if (handler != null)
                 handler(this, EventArgs.Empty);
-            notifyNextImage();
+            NotifyNextImage();
         }
     }
     public event EventHandler PictureSetChanged;
     public event EventHandler<PictureChangedEventArgs> PictureChanged;
-    void applySlideMode(){
-        if (slideOrder == null)
-            slideOrder = new Queue<int>(pictureList.Count);
+    void ApplySlideMode(){
         if (pictureList.Count == 0)
             return;
+
+        slideOrder = new Queue<int>(pictureList.Count);
         IEnumerable<int> order;
         switch (slideMode){
             case SlideMode.Sequence:
@@ -189,7 +200,7 @@ public class PictureSource : IPictureSource{
                 order = from path in pictureList orderby path.FileDate select path.ID;
                 break;
             case SlideMode.Random:
-                order = generateRandomSequence(pictureList.Count);
+                order = GenerateRandomSequence(pictureList.Count);
                 break;
             default:
                 Trace.WriteLine("Unhandled slide mode " + slideMode);
@@ -200,44 +211,42 @@ public class PictureSource : IPictureSource{
             slideOrder.Enqueue(i);
         }
     }
-    void changePictureEvent(object sender, EventArgs e){
-        notifyNextImage();
+    void ChangePictureEvent(object sender, EventArgs e){
+        NotifyNextImage();
     }
-    static IEnumerable<int> generateRandomSequence(int count){
+    static IEnumerable<int> GenerateRandomSequence(int count){
         var sequence = Enumerable.Range(0, count).ToArray();
-        shuffleItemByItem(count, sequence);
-        sequence = shuffleSequenceDeck(count, sequence);
-        shuffleItemByItem(count, sequence);
+        ShuffleItemByItem(count, sequence);
+        sequence = ShuffleSequenceDeck(count, sequence);
+        ShuffleItemByItem(count, sequence);
         return sequence;
     }
-    static int[] shuffleSequenceDeck(int count, int[] sequence) {
+    static int[] ShuffleSequenceDeck(int count, int[] sequence) {
         var output = new int[sequence.Length];
         for(int i=0; i < count; ++i){
             var pos1 = MainApp.Rand(count);
             var pos2 = MainApp.Rand(count);
             sequence.Shuffle(pos1, pos2, ref output);
-            swap(ref sequence, ref output);
+            Swap(ref sequence, ref output);
         }
         return sequence;
     }
-    static void shuffleItemByItem(int count, int[] sequence){
+    static void ShuffleItemByItem(int count, int[] sequence){
         for(int i=0; i < count; ++i){
             var pos1 = MainApp.Rand(count);
             var pos2 = MainApp.Rand(count);
             sequence.Swap(pos1, pos2);
         }
     }
-    static void swap<T>(ref T a, ref T b){
-        T t = a;
-        a = b;
-        b = t;
+    static void Swap<T>(ref T a, ref T b){
+        (a, b) = (b, a);
     }
-    void notifyNextImage() {
-        ImageSource image;
+    void NotifyNextImage() {
+        ImageSource? image;
         string fileName;
         DateTime fileDate;
         do{
-            image = fetchNextPicture(out fileName, out fileDate);
+            image = FetchNextPicture(out fileName, out fileDate);
         } while (image == null && pictureList.Count > 0);
         if (image != null){
             currentPicture = image;
@@ -250,12 +259,12 @@ public class PictureSource : IPictureSource{
             timer.Stop();
         }
     }
-    ImageSource fetchNextPicture(out string fileName, out DateTime fileDate){
+    ImageSource? FetchNextPicture(out string fileName, out DateTime fileDate){
         string pictureFile = String.Empty;
         try{
             currentPictureIndex = slideOrder.Dequeue();
             if (slideOrder.Count == 0)
-                applySlideMode();
+                ApplySlideMode();
             fileName = pictureFile = pictureList[currentPictureIndex].Path;
             fileDate = pictureList[currentPictureIndex].FileDate;
             using(var s = File.OpenRead(pictureFile)){
@@ -278,8 +287,8 @@ public class PictureSource : IPictureSource{
         fileDate = DateTime.MinValue;
         return null;
     }
-    void regeneratePictureList(FolderCollection folderList){
-        if (folderList == null || folderList.Count == 0){
+    void RegeneratePictureList(FolderCollection folderList){
+        if (folderList.Count == 0){
             pictureList = new List<ImagePath>();
             return;
         }
@@ -332,12 +341,4 @@ public class PictureSource : IPictureSource{
         public DateTime FileDate;
     }
     #endregion
-
-    List<ImagePath> pictureList;
-    readonly DispatcherTimer timer;
-    Queue<int> slideOrder;
-    readonly SlideMode slideMode;
-    int currentPictureIndex;
-    ImageSource? currentPicture;
-    readonly FolderCollectionSet folderSet;
 }

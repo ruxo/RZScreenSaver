@@ -11,7 +11,7 @@ namespace RZScreenSaver.SlidePages{
     public partial class SimpleSlide{
         public SimpleSlide() {
             InitializeComponent();
-            imagePathText.Visibility = Settings.Default.ShowTitle ? Visibility.Visible : Visibility.Collapsed;
+            imagePathText.Visibility = AppDeps.Settings.Value.ShowTitle ? Visibility.Visible : Visibility.Collapsed;
         }
         public override bool ShowTitle{
             get { return imagePathText.Visibility == Visibility.Visible; }
@@ -53,7 +53,7 @@ namespace RZScreenSaver.SlidePages{
             case DisplayMode.Original:
                 slideShowImage.Stretch = Stretch.None;
                 break;
-            case DisplayMode.Stretch:   
+            case DisplayMode.Stretch:
                 slideShowImage.Stretch = Stretch.Fill;
                 break;
             case DisplayMode.Fit:

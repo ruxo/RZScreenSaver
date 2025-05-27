@@ -4,7 +4,6 @@ using System.Reflection;
 using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
-using RZScreenSaver.Properties;
 
 namespace RZScreenSaver;
 
@@ -44,16 +43,16 @@ class BackgroundSlideShowEngine{
         public void SwitchToSet(int setIndex){
             Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle,
                                                        new Action<int>(source.SwitchToSet), setIndex);
-            Settings.Default.BackgroundPictureSetSelected = setIndex;
-            Settings.Default.Save();
+            AppDeps.Settings.Value.BackgroundPictureSetSelected = setIndex;
+            AppDeps.Settings.Save();
         }
         public void ToggleShowTitle(){
-            Settings.Default.ShowTitle = !Settings.Default.ShowTitle;
+            AppDeps.Settings.Value.ShowTitle = !AppDeps.Settings.Value.ShowTitle;
             foreach (var host in slideShowList){
                 Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.DataBind,
                                                            new Action<PageHost>(SetHostTitle), host);
             }
-            Settings.Default.Save();
+            AppDeps.Settings.Save();
         }
         public void Dispose(){
             Application.Current.Dispatcher.BeginInvokeShutdown(DispatcherPriority.Background);
@@ -65,7 +64,7 @@ class BackgroundSlideShowEngine{
         /// must be called from its thread
         /// </summary>
         void SetHostTitle(PageHost host){
-            host.SlidePage.ShowTitle = Settings.Default.ShowTitle;
+            host.SlidePage.ShowTitle = AppDeps.Settings.Value.ShowTitle;
         }
     }
 

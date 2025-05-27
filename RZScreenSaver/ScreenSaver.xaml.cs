@@ -30,7 +30,7 @@ partial class ScreenSaver{
 
     internal KeyEventHandler? HandleKey;
     internal void RefreshShowTitle(){
-        slide.ShowTitle = Settings.Default.ShowTitle;
+        slide.ShowTitle = AppDeps.Settings.Value.ShowTitle;
     }
     protected override void OnActivated(EventArgs e) {
         lastMousePosition = System.Windows.Forms.Cursor.Position;
@@ -60,21 +60,21 @@ partial class ScreenSaver{
         e.Handled = true;
         if (SetChangingKeys.Contains(e.Key)){
             var setIndex = Array.IndexOf(SetChangingKeys, e.Key);
-            if (setIndex != Settings.Default.PictureSetSelected){
+            if (setIndex != AppDeps.Settings.Value.PictureSetSelected){
                 pictureSource.SwitchToSet(setIndex);
-                Settings.Default.PictureSetSelected = setIndex;
-                Settings.Default.Save();
+                AppDeps.Settings.Value.PictureSetSelected = setIndex;
+                AppDeps.Settings.Save();
             }
             return;
         }
         switch(e.Key){
             case Key.F2:
-                Settings.Default.ShowTitle = !Settings.Default.ShowTitle;
-                Settings.Default.Save();
+                AppDeps.Settings.Value.ShowTitle = !AppDeps.Settings.Value.ShowTitle;
+                AppDeps.Settings.Save();
                 NotifyAllScreenSavers(saver => saver.RefreshShowTitle());
                 return;
             case Key.Scroll:
-                Debug.WriteLine("Scroll Lock with State = " + e.KeyStates.ToString());
+                Debug.WriteLine("Scroll Lock with State = " + e.KeyStates);
                 if (e.KeyStates == KeyStates.Toggled)
                     pictureSource.Stop();
                 else
@@ -87,8 +87,8 @@ partial class ScreenSaver{
                 using(new UserInteractionScope(this)){
                     var configDialog = new ConfigDialog {Owner=this};
                     var result = configDialog.ShowDialog();
-                    if (result != null && result.Value)
-                        pictureSource.SwitchToSet(Settings.Default.PictureSetSelected);
+                    if (result == true && AppDeps.Settings.Value.PictureSetSelected is not null)
+                        pictureSource.SwitchToSet(AppDeps.Settings.Value.PictureSetSelected.Value);
                 }
                 return;
         }

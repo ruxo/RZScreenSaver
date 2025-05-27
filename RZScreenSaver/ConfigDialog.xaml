@@ -37,7 +37,7 @@
                         <wf:NumericUpDown x:Name="slideDelayInput" Minimum="3" Maximum="99" ForeColor="Black" />
                     </WindowsFormsHost>
                     <Label Name="label2" Grid.Row="0" Grid.Column="1">Slide Mode:</Label>
-                    <ComboBox Name="slideModeList" Margin="3" Grid.Row="1" Grid.Column="1" SelectionChanged="onChangeSlideMode">
+                    <ComboBox Name="slideModeList" Margin="3" Grid.Row="1" Grid.Column="1" SelectionChanged="OnChangeSlideMode">
                         <rz:SlideMode>Sequence</rz:SlideMode>
                         <rz:SlideMode>SortedByDateAllFolders</rz:SlideMode>
                         <rz:SlideMode>SortedByFilenameAllFolders</rz:SlideMode>
@@ -118,7 +118,7 @@
             </TabControl>
     </DockPanel>
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="1">
-        <Button Name="okButton" IsEnabled="False" Margin="3" MinWidth="60" IsDefault="True" Click="onSave">O_K</Button>
+        <Button Name="okButton" IsEnabled="False" Margin="3" MinWidth="60" IsDefault="True" Click="OnSave">O_K</Button>
         <Button Name="cancelButton" Margin="3" MinWidth="60" IsCancel="True">_Cancel</Button>
     </StackPanel>
     </Grid>

@@ -1,13 +1,20 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows.Media;
 
 namespace RZScreenSaver;
 
 class TemporaryPictureSource : IPictureSource{
-    public TemporaryPictureSource(FolderCollectionSet folderSet, SlideMode slideMode, int delayTime)
-        : this(new PictureSource(folderSet, slideMode, delayTime), slideMode, delayTime){
+    readonly IPictureSource mainSource;
+    IPictureSource? tempSource;
+    readonly SlideMode mode;
+    readonly int delayTime;
+
+    public TemporaryPictureSource(IReadOnlyList<FolderCollection> picturePaths, int? pictureSetSelected, SlideMode slideMode, int delayTime)
+        : this(new PictureSource(picturePaths, pictureSetSelected, slideMode, delayTime), slideMode, delayTime){
     }
+
     public TemporaryPictureSource(IPictureSource mainSource, SlideMode slideMode, int delayTime){
         this.mainSource = mainSource;
         mainSource.PictureChanged += pictureChangedDelegates;
@@ -17,19 +24,12 @@ class TemporaryPictureSource : IPictureSource{
     public bool TempMode => tempSource is not null;
 
     public void SwitchToCurrentFolder(){
-        var currentFolder = Path.GetDirectoryName(CurrentPictureFile);
+        var currentFolder = Path.GetDirectoryName(CurrentPictureFile)!;
         if (TempMode)
             tempSource!.Stop();
         else if (!mainSource.IsPaused)
             mainSource.Pause();
-        tempSource =
-            new PictureSource(
-                new FolderCollectionSet{
-                    new FolderCollection{
-                        new FolderInclusion(currentFolder, InclusionMode.Recursive)
-                    }
-                },
-                mode, delayTime);
+        tempSource = new PictureSource([new() { {currentFolder, InclusionMode.Recursive} }], 0, mode, delayTime);
         tempSource.PictureChanged += pictureChangedDelegates;
         tempSource.Start();
     }
@@ -41,6 +41,9 @@ class TemporaryPictureSource : IPictureSource{
         if (mainSource.IsPaused)
             mainSource.Resume();
     }
+
+    IPictureSource Source => tempSource ?? mainSource;
+
     #region Implementation of IPictureSource
 
     public ImageSource? CurrentPicture => Source.CurrentPicture;
@@ -97,10 +100,4 @@ class TemporaryPictureSource : IPictureSource{
     EventHandler<PictureChangedEventArgs> pictureChangedDelegates;
 
     #endregion
-    IPictureSource Source => tempSource ?? mainSource;
-
-    readonly IPictureSource mainSource;
-    IPictureSource? tempSource;
-    readonly SlideMode mode;
-    readonly int delayTime;
 }

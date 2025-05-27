@@ -5,7 +5,6 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
-using RZScreenSaver.Properties;
 using RZScreenSaver.SlidePages;
 using Application=System.Windows.Application;
 using Cursor=System.Windows.Forms.Cursor;
@@ -23,7 +22,7 @@ sealed class ScreenSaverEngine{
         return new ScreenSaver(source, rect) { SlidePage = page};
     }
     void ScreenSaverConfigurer(ScreenSaver saver){
-        saver.SlidePage.ShowTitle = Settings.Default.ShowTitle;
+        saver.SlidePage.ShowTitle = AppDeps.Settings.Value.ShowTitle;
         saver.Closed += OnSaverClosed;
         saver.HandleKey += OnHandleKeyUp;
         saver.Show();
@@ -42,11 +41,11 @@ sealed class ScreenSaverEngine{
 
     #region Run As Background
 
-    public void RunAsBackground(){
-        var pictureSet = Settings.Default.PicturePaths.Clone();
-        pictureSet.SelectedIndex = Settings.Default.BackgroundPictureSetSelected;
+    public void RunAsBackground() {
+        var pictureSet = AppDeps.Settings.Value.PicturePaths;
+        var selectedIndex = AppDeps.Settings.Value.BackgroundPictureSetSelected;
 
-        pictureSource = new TemporaryPictureSource(pictureSet, Settings.Default.SlideMode, Settings.Default.SlideShowDelay);
+        pictureSource = new TemporaryPictureSource(pictureSet, selectedIndex, AppDeps.Settings.Value.SlideMode, AppDeps.Settings.Value.SlideShowDelay);
         var slideShowList = CreatePageHostAndRun(PageHostFactory, PageHostConfigurer, pictureSource);
 
         new BackgroundSlideShowEngine(pictureSource).Start(slideShowList);
@@ -57,7 +56,7 @@ sealed class ScreenSaverEngine{
 
     static void PageHostConfigurer(PageHost host){
         host.IsHitTestVisible = false;
-        host.SlidePage.ShowTitle = Settings.Default.ShowTitle;
+        host.SlidePage.ShowTitle = AppDeps.Settings.Value.ShowTitle;
         var hostTemp = host;
         host.Activated += delegate { hostTemp.SendToBottom(); };
         host.Show();
@@ -72,7 +71,7 @@ sealed class ScreenSaverEngine{
                                       0, 0, 0, parentRect.Width, parentRect.Height, "RZ Screen Saver Preview",
                                       previewWindow, false);
         var source = CreateSourceFromSettings();
-        var slidePage = SlidePageFactory.Create(Settings.Default.SaverMode).Create(Settings.Default.DisplayMode);
+        var slidePage = SlidePageFactory.Create(AppDeps.Settings.Value.SaverMode).Create(AppDeps.Settings.Value.DisplayMode);
         source.PictureChanged += slidePage.OnShowPicture;
         wpfWin32.RootVisual = (Visual) slidePage;
         wpfWin32.Disposed += delegate { Application.Current.Shutdown(); };
@@ -90,31 +89,35 @@ sealed class ScreenSaverEngine{
 
     static T[] CreatePageHostAndRun<T>(Func<IPictureSource,Rect,ISlidePage,T> hostCreator, Action<T> hostConfigurer, IPictureSource source)
         where T : PageHost{
-        source.RestorePicturePosition(Settings.Default.LastShownIndex);
-        var slideCreator = SlidePageFactory.Create(Settings.Default.SaverMode);
+        if (AppDeps.Settings.Value.LastShownIndex is {} shownIndex)
+            source.RestorePicturePosition(shownIndex);
+
+        var slideCreator = SlidePageFactory.Create(AppDeps.Settings.Value.SaverMode);
         var result = (from screen in Screen.AllScreens
                       let b = screen.Bounds
                       let rect = new Rect(b.Left, b.Top, b.Width, b.Height)
-                      select hostCreator(source, rect, slideCreator.Create(Settings.Default.DisplayMode))).ToArray();
+                      select hostCreator(source, rect, slideCreator.Create(AppDeps.Settings.Value.DisplayMode))).ToArray();
         foreach (var host in result)
             hostConfigurer(host);
         source.Start();
         return result;
     }
 
-    IPictureSource CreateSourceFromSettings(){
-        pictureSource = new TemporaryPictureSource(Settings.Default.PicturePaths, Settings.Default.SlideMode, Settings.Default.SlideShowDelay);
-        return pictureSource;
-    }
+    IPictureSource CreateSourceFromSettings()
+        => pictureSource = new TemporaryPictureSource(AppDeps.Settings.Value.PicturePaths,
+                                                      AppDeps.Settings.Value.PictureSetSelected,
+                                                      AppDeps.Settings.Value.SlideMode,
+                                                      AppDeps.Settings.Value.SlideShowDelay);
+
     void OnSaverClosed(object sender, EventArgs e){
         foreach (var saver in savers){
             if (saver.IsVisible)
                 saver.Close();
         }
         Cursor.Show();
-        if (Settings.Default.LastShownIndex != pictureSource.PictureIndex){
-            Settings.Default.LastShownIndex = pictureSource.PictureIndex;
-            Settings.Default.Save();
+        if (AppDeps.Settings.Value.LastShownIndex != pictureSource.PictureIndex){
+            AppDeps.Settings.Value.LastShownIndex = pictureSource.PictureIndex;
+            AppDeps.Settings.Save();
         }
     }
     public interface ISaverEngine{

@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
-using RZScreenSaver.Properties;
 
 namespace RZScreenSaver;
 
@@ -17,7 +16,7 @@ public partial class AboutRz{
     internal AboutRz(ScreenSaverEngine.ISaverEngine engine) {
         InitializeComponent();
         saverEngine = engine;
-        showTitleMenu.IsChecked = Settings.Default.ShowTitle;
+        showTitleMenu.IsChecked = AppDeps.Settings.Value.ShowTitle;
     }
     protected override void OnSourceInitialized(EventArgs e) {
         base.OnSourceInitialized(e);
