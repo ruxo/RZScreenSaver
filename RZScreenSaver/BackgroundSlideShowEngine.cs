@@ -1,91 +1,46 @@
 using System;
 using System.Diagnostics;
-using System.Reflection;
-using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
 
 namespace RZScreenSaver;
 
-class BackgroundSlideShowEngine{
-    public BackgroundSlideShowEngine(IPictureSource source){
-        pictureSource = source;
+static class BackgroundSlideShowEngine{
+    public static Application Start(IPictureSource source, PageHost[] slideShowList){
+        var pictureSource = source;
 
-        screenSaverCheck.Interval = TimeSpan.FromSeconds(5);
-        screenSaverCheck.Tick += OnCheckScreenSaver;
-    }
-    void OnCheckScreenSaver(object sender, EventArgs e){
-        var success = Win32.SystemParametersInfo(Win32.SPI_GETSCREENSAVERRUNNING, 0, out var isRunning, 0);
-        Debug.Assert(success);
-        if (isRunning ^ pictureSource.IsPaused)
-            if (isRunning)
-                pictureSource.Pause();
-            else
-                pictureSource.Resume();
-    }
-    public void Start(PageHost[] slideShowList){
-        var engineAssemblyPath = Assembly.GetExecutingAssembly().Location;
-        Debug.Assert(engineAssemblyPath != null);
-        var aboutDomain = AppDomain.CreateDomain("Background Domain");
-        var helperTypeName = typeof (ForegroundDomain).FullName!;
-        var foregroundDomain = (ForegroundDomain) aboutDomain.CreateInstanceFromAndUnwrap(engineAssemblyPath,helperTypeName);
-        foregroundDomain.MainApplication = new SaverEngine(pictureSource, slideShowList);
-
-        var aboutThread = new Thread(foregroundDomain.RunAbout);
-        aboutThread.SetApartmentState(ApartmentState.STA);
-        aboutThread.Start();
-
+        var screenSaverCheck = new DispatcherTimer(DispatcherPriority.Background) {
+            Interval = TimeSpan.FromSeconds(5)
+        };
+        screenSaverCheck.Tick += (_, _) => {
+            var success = Win32.SystemParametersInfo(Win32.SPI_GETSCREENSAVERRUNNING, 0, out var isRunning, 0);
+            Debug.Assert(success);
+            if (isRunning ^ pictureSource.IsPaused)
+                if (isRunning)
+                    pictureSource.Pause();
+                else
+                    pictureSource.Resume();
+        };
         screenSaverCheck.Start();
+
+        var aboutDialog = new AboutRz(new SaverEngine(pictureSource, slideShowList));
+        aboutDialog.Hide();
+        return new Application{ShutdownMode = ShutdownMode.OnExplicitShutdown};
     }
 
-    public class SaverEngine(IPictureSource source, PageHost[] slideShowList) : MarshalByRefObject, ScreenSaverEngine.ISaverEngine, IDisposable
+    sealed class SaverEngine(IPictureSource source, PageHost[] slideShowList) : ScreenSaverEngine.ISaverEngine
     {
         public void SwitchToSet(int setIndex){
-            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle,
-                                                       new Action<int>(source.SwitchToSet), setIndex);
+            source.SwitchToSet(setIndex);
             AppDeps.Settings.Value.BackgroundPictureSetSelected = setIndex;
             AppDeps.Settings.Save();
         }
         public void ToggleShowTitle(){
             AppDeps.Settings.Value.ShowTitle = !AppDeps.Settings.Value.ShowTitle;
-            foreach (var host in slideShowList){
-                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.DataBind,
-                                                           new Action<PageHost>(SetHostTitle), host);
-            }
+            foreach (var host in slideShowList)
+                if (host.SlidePage is not null)
+                    host.SlidePage.ShowTitle = AppDeps.Settings.Value.ShowTitle;
             AppDeps.Settings.Save();
         }
-        public void Dispose(){
-            Application.Current.Dispatcher.BeginInvokeShutdown(DispatcherPriority.Background);
-        }
-        public override object InitializeLifetimeService() {
-            return null;
-        }
-        /// <summary>
-        /// must be called from its thread
-        /// </summary>
-        void SetHostTitle(PageHost host){
-            host.SlidePage.ShowTitle = AppDeps.Settings.Value.ShowTitle;
-        }
     }
-
-    public class ForegroundDomain : MarshalByRefObject{
-        public SaverEngine? MainApplication { get; set; }
-        public void RunAbout(){
-            Debug.Assert(MainApplication is not null);
-
-            Debug.WriteLine("App Domain Name: " + AppDomain.CurrentDomain.FriendlyName);
-            Debug.WriteLine("Has Application? " + (Application.Current != null));
-            var aboutDialog = new AboutRz(MainApplication!);
-            aboutDialog.Hide();
-            new Application{ShutdownMode = ShutdownMode.OnExplicitShutdown}.Run();
-
-            MainApplication!.Dispose();
-        }
-        public override object InitializeLifetimeService() {
-            return null;
-        }
-    }
-
-    readonly DispatcherTimer screenSaverCheck = new(DispatcherPriority.Background);
-    readonly IPictureSource pictureSource;
 }

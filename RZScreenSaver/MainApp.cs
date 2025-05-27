@@ -67,25 +67,15 @@ public static class MainApp{
             Trace.WriteLine(e.Message);
             return e.ExitCode;
         }
-        var a = new Application();
         var w = new ScreenSaverEngine();
-        switch (command){
-            case MainCommand.ShowSaver:
-                w.SaveScreen();
-                break;
-            case MainCommand.PreviewSaver:
-                w.PreviewScreen(previewWindow);
-                break;
-            case MainCommand.ConfigureSaver:
-                w.ConfigureSaver(previewWindow);
-                break;
-            case MainCommand.RunAsBackground:
-                w.RunAsBackground();
-                break;
-            default:
-                Trace.WriteLine("FATAL: Unhandle main command " + command);
-                break;
-        }
+        var a = command switch {
+            MainCommand.ShowSaver       => w.SaveScreen(),
+            MainCommand.PreviewSaver    => w.PreviewScreen(previewWindow),
+            MainCommand.ConfigureSaver  => w.ConfigureSaver(previewWindow),
+            MainCommand.RunAsBackground => w.RunAsBackground(),
+
+            _                           => throw new NotSupportedException("FATAL: Unhandle main command " + command)
+        } ?? new Application();
         return a.Run();
     }
     static MainCommand ExtractCommand(string[] arg, out IntPtr previewWindow){

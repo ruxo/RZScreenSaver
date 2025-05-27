@@ -14,9 +14,10 @@ namespace RZScreenSaver;
 
 sealed class ScreenSaverEngine{
     #region Save Screen
-    public void SaveScreen(){
+    public Application? SaveScreen(){
         savers = CreatePageHostAndRun(ScreenSaverFactory, ScreenSaverConfigurer);
         Cursor.Hide();
+        return null;
     }
     static ScreenSaver ScreenSaverFactory(IPictureSource source, Rect rect, ISlidePage page){
         return new ScreenSaver(source, rect) { SlidePage = page};
@@ -41,14 +42,14 @@ sealed class ScreenSaverEngine{
 
     #region Run As Background
 
-    public void RunAsBackground() {
+    public Application RunAsBackground() {
         var pictureSet = AppDeps.Settings.Value.PicturePaths;
         var selectedIndex = AppDeps.Settings.Value.BackgroundPictureSetSelected;
 
         pictureSource = new TemporaryPictureSource(pictureSet, selectedIndex, AppDeps.Settings.Value.SlideMode, AppDeps.Settings.Value.SlideShowDelay);
         var slideShowList = CreatePageHostAndRun(PageHostFactory, PageHostConfigurer, pictureSource);
 
-        new BackgroundSlideShowEngine(pictureSource).Start(slideShowList);
+        return BackgroundSlideShowEngine.Start(pictureSource, slideShowList);
     }
 
     static PageHost PageHostFactory(IPictureSource source, Rect rect, ISlidePage page)
@@ -63,7 +64,7 @@ sealed class ScreenSaverEngine{
         host.SendToBottom();
     }
     #endregion
-    public void PreviewScreen(IntPtr previewWindow){
+    public Application? PreviewScreen(IntPtr previewWindow){
         Win32.RECT parentRect;
         Win32.GetWindowRect(previewWindow, out parentRect);
 
@@ -76,13 +77,15 @@ sealed class ScreenSaverEngine{
         wpfWin32.RootVisual = (Visual) slidePage;
         wpfWin32.Disposed += delegate { Application.Current.Shutdown(); };
         source.Start();
+        return null;
     }
-    public void ConfigureSaver(IntPtr previewWindow){
+    public Application? ConfigureSaver(IntPtr previewWindow){
         var configDialog = new ConfigDialog();
         if (previewWindow != IntPtr.Zero){
             new WindowInteropHelper(configDialog){Owner = previewWindow};
         }
         configDialog.ShowDialog();
+        return null;
     }
     T[] CreatePageHostAndRun<T>(Func<IPictureSource,Rect,ISlidePage,T> hostCreator, Action<T> hostConfigurer) where T : PageHost
         => CreatePageHostAndRun(hostCreator, hostConfigurer, CreateSourceFromSettings());
