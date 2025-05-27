@@ -30,7 +30,7 @@ public static class MainApp{
 
     [STAThread]
     public static int Main(string[] arg){
-        AppDomain.CurrentDomain.UnhandledException += onUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         System.Windows.Forms.Application.EnableVisualStyles();
 
         #region Debug: print arguments & Settings
@@ -124,7 +124,7 @@ public static class MainApp{
             return MainCommand.RunAsBackground;
         }
     }
-    static void onUnhandledException(object sender, UnhandledExceptionEventArgs e){
+    static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e){
         MessageBox.Show(e.ExceptionObject.ToString(), "Unhandled Exception", MessageBoxButton.OK, MessageBoxImage.Exclamation);
     }
     static readonly Random r = new Random();
