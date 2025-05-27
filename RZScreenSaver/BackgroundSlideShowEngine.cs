@@ -1,6 +1,8 @@
+using System;
+
 namespace RZScreenSaver;
 
-sealed class BackgroundSlideShowEngine(IPictureSource source, PageHost[] slideShowList) : ISaverEngine
+sealed class BackgroundSlideShowEngine(IPictureSource source, PageHost[] slideShowList) : MarshalByRefObject, ISaverEngine
 {
     public void SwitchToSet(int setIndex) {
         source.SwitchToSet(setIndex);
@@ -14,5 +16,9 @@ sealed class BackgroundSlideShowEngine(IPictureSource source, PageHost[] slideSh
             if (host.SlidePage is not null)
                 host.SlidePage.ShowTitle = AppDeps.Settings.Value.ShowTitle;
         AppDeps.Settings.Save();
+    }
+
+    public override object? InitializeLifetimeService() {
+        return null;
     }
 }

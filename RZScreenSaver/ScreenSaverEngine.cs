@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
@@ -81,13 +82,37 @@ sealed class ScreenSaverEngine{
         };
         screenSaverCheck.Start();
 
-        RunAboutDialog(pictureSource, slideShowList);
-        return new Application{ShutdownMode = ShutdownMode.OnExplicitShutdown};
+        // Need another appdomain in order to display task bar and dialogs. Otherwise, unexpected events will occur.. (I don't know why yet)
+        var engineAssemblyPath = Assembly.GetExecutingAssembly().Location;
+        Debug.Assert(engineAssemblyPath != null);
+        var aboutDomain = AppDomain.CreateDomain("Background Domain");
+        var helperTypeName = typeof (ForegroundDomain).FullName!;
+        var foregroundDomain = (ForegroundDomain) aboutDomain.CreateInstanceFromAndUnwrap(engineAssemblyPath,helperTypeName);
+        foregroundDomain.MainApplication = new BackgroundSlideShowEngine(pictureSource, slideShowList);
+
+        var aboutThread = new Thread(foregroundDomain.RunAbout);
+        aboutThread.SetApartmentState(ApartmentState.STA);
+        aboutThread.Start();
+
+        return null;
     }
 
-    static void RunAboutDialog(TemporaryPictureSource pictureSource, PageHost[] slideShowList) {
-        var aboutDialog = new AboutRz(new BackgroundSlideShowEngine(pictureSource, slideShowList));
-        aboutDialog.Hide();
+    public class ForegroundDomain : MarshalByRefObject{
+        public ISaverEngine? MainApplication { get; set; }
+        public void RunAbout(){
+            Debug.Assert(MainApplication is not null);
+
+            Debug.WriteLine("App Domain Name: " + AppDomain.CurrentDomain.FriendlyName);
+            Debug.WriteLine("Has Application? " + (Application.Current != null));
+            var aboutDialog = new AboutRz(MainApplication!);
+            aboutDialog.Hide();
+            new Application{ShutdownMode = ShutdownMode.OnExplicitShutdown}.Run();
+
+            Environment.Exit(0);
+        }
+        public override object? InitializeLifetimeService() {
+            return null;
+        }
     }
 
     static PageHost PageHostFactory(IPictureSource source, Rect rect, ISlidePage page)
