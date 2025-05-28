@@ -6,6 +6,8 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Reactive;
+using System.Reactive.Concurrency;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Windows.Media;
@@ -42,7 +44,6 @@ public class PictureSource : IPictureSource{
 
     readonly Subject<Unit> pictureSetChanged = new();
     readonly Subject<PictureChangedEventArgs> pictureChanged = new();
-    readonly Subject<FolderCollection> sourceSetChanged = new();
     readonly Dispatcher myDispatcher;
 
     List<ImagePath> pictureList = new();
@@ -51,6 +52,7 @@ public class PictureSource : IPictureSource{
     int currentPictureIndex;
     ImageSource? currentPicture;
     int? pictureSetSelected;
+    IDisposable pictureSetLoader = Disposable.Empty;
 
     #region ctors
 
@@ -66,41 +68,15 @@ public class PictureSource : IPictureSource{
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(slideDelay) };
         timer.Tick += ChangePictureEvent;
 
-        var timing = Observable.Timer(TimeSpan.FromSeconds(2)).StartWith(0).Select(_ => new List<ImagePath>());
-
-        List<ImagePath>? lastList = null;
-        var source = sourceSetChanged.SelectMany(fc => RegeneratePictureList(fc, pictureList.Count).Append(ImagePath.Empty));
-
-        timing.CombineLatest(source, (list, image) => {
-                   if (image == ImagePath.Empty)
-                       return [];
-                   list.Add(image);
-                   return list;
-               })
-              .DistinctUntilChanged()
-              .Select(list => {
-                   var result = lastList;
-                   lastList = list;
-                   return result;
-               })
-              .Where(x => x?.Count > 0)
-              .Subscribe(list => {
-                   Debug.WriteLine($"Picture list changed. {list!.Count} pictures.");
-                   var newItemIndex = pictureList.Count;
-                   pictureList = list;
-
-                   foreach(var i in GenerateImageOrder(pictureList).Where(x => x >= newItemIndex))
-                       slideOrder.Enqueue(i);
-               });
-
         if (pictureSetSelected is not null)
-            sourceSetChanged.OnNext(picturePaths[pictureSetSelected.Value]);
+            pictureSetLoader = LoadPictureSet(picturePaths[pictureSetSelected.Value]);
     }
 
     bool isDisposed;
     public void Dispose() {
         if (isDisposed) return;
         isDisposed = true;
+        pictureSetLoader.Dispose();
         timer.Stop();
         pictureChanged.OnCompleted();
         pictureSetChanged.OnCompleted();
@@ -115,10 +91,8 @@ public class PictureSource : IPictureSource{
     public bool IsStarted => timer.IsEnabled;
 
     public void Start(){
-        if (!IsStarted && pictureList.Count > 0){
-            timer.Start();
-            myDispatcher.InvokeAsync(NotifyNextImage);
-        }
+        timer.Start();
+        myDispatcher.InvokeAsync(NotifyNextImage);
         pauseCall = 0;
     }
     public void Stop(){
@@ -209,7 +183,8 @@ public class PictureSource : IPictureSource{
         pictureSetSelected = setIndex;
         pictureList = [];
         slideOrder = new();
-        sourceSetChanged.OnNext(picturePaths[setIndex]);
+        pictureSetLoader.Dispose();
+        pictureSetLoader = LoadPictureSet(picturePaths[setIndex]);
 
         if (IsStarted){
             pictureSetChanged.OnNext(Unit.Default);
@@ -276,19 +251,10 @@ public class PictureSource : IPictureSource{
         (a, b) = (b, a);
     }
     void NotifyNextImage() {
-        ImageSource? image;
-        string fileName;
-        DateTime fileDate;
-        do{
-            image = FetchNextPicture(out fileName, out fileDate);
-        } while (image == null && pictureList.Count > 0);
-        if (image != null){
-            currentPicture = image;
-            pictureChanged.OnNext(new PictureChangedEventArgs(fileName, fileDate, image));
-        }else{
-            Debug.Assert(pictureList.Count == 0, "Picture list supposes to be all removed because the invalid image file.");
-            timer.Stop();
-        }
+        if (FetchNextPicture(out var fileName, out var fileDate) is not { } image) return;
+
+        currentPicture = image;
+        pictureChanged.OnNext(new PictureChangedEventArgs(fileName, fileDate, image));
     }
     ImageSource? FetchNextPicture(out string fileName, out DateTime fileDate){
         fileName = String.Empty;
@@ -319,8 +285,47 @@ public class PictureSource : IPictureSource{
             Trace.WriteLine(pictureFile + " is not a recognized image format!");
             pictureList.RemoveAt(currentPictureIndex);
             currentPictureIndex = -1;
+            var newSlide = slideOrder.Select(i => i > currentPictureIndex ? i - 1 : i);
+            slideOrder = new ConcurrentQueue<int>(newSlide);
         }
         return null;
+    }
+
+    IDisposable LoadPictureSet(FolderCollection fc, int startId = 0) {
+        var timing = Observable.Interval(TimeSpan.FromSeconds(2)).StartWith(0).Select(_ => new List<ImagePath>());
+
+        List<ImagePath>? lastList = null;
+        var source = RegeneratePictureList(fc, startId).Append(ImagePath.Empty).ToObservable(ThreadPoolScheduler.Instance);
+
+        var ended = false;
+        var disposables = Disposable.Empty;
+        disposables = timing.CombineLatest(source, (list, image) => {
+                                 if (image == ImagePath.Empty){
+                                     ended = true;
+                                     return [];
+                                 }
+                                 list.Add(image);
+                                 return list;
+                             })
+                            .DistinctUntilChanged()
+                            .Select(list => {
+                                 var result = lastList;
+                                 lastList = list;
+                                 return result;
+                             })
+                            .Where(x => x?.Count > 0)
+                            .Subscribe(list => {
+                                 Debug.WriteLine($"Picture list changed. {list!.Count} pictures.");
+                                 pictureList.AddRange(list);
+
+                                 foreach (var i in GenerateImageOrder(list))
+                                     slideOrder.Enqueue(i);
+
+                                 if (ended)
+                                     // ReSharper disable once AccessToModifiedClosure
+                                     disposables.Dispose();
+                             });
+        return disposables;
     }
 
     [Pure]

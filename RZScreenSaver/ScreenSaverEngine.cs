@@ -88,7 +88,7 @@ sealed class ScreenSaverEngine{
         var aboutDomain = AppDomain.CreateDomain("Background Domain");
         var helperTypeName = typeof (ForegroundDomain).FullName!;
         var foregroundDomain = (ForegroundDomain) aboutDomain.CreateInstanceFromAndUnwrap(engineAssemblyPath,helperTypeName);
-        foregroundDomain.MainApplication = new BackgroundSlideShowEngine(pictureSource, slideShowList);
+        foregroundDomain.MainApplication = new BackgroundSlideShowEngine(Dispatcher.CurrentDispatcher, pictureSource, slideShowList);
 
         var aboutThread = new Thread(foregroundDomain.RunAbout);
         aboutThread.SetApartmentState(ApartmentState.STA);

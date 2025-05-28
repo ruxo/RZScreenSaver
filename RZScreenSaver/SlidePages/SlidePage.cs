@@ -14,17 +14,18 @@ public class SlidePage : Page, ISlidePage
 {
     #region Implementation of ISlidePage
 
+    DisplayMode displayMode = DisplayMode.Fit;
     public DisplayMode DisplayMode
     {
-        get;
+        get => displayMode;
         set
         {
-            if (field != value){
-                field = value;
+            if (displayMode != value){
+                displayMode = value;
                 OnDisplayModeChanged();
             }
         }
-    } = DisplayMode.Fit;
+    }
 
     public virtual bool ShowTitle
     {
