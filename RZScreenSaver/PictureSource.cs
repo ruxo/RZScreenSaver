@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Reactive;
@@ -42,14 +43,15 @@ public class PictureSource : IPictureSource{
     readonly Subject<PictureChangedEventArgs> pictureChanged = new();
 
     List<ImagePath> pictureList = new();
-    Queue<int> slideOrder = new();
+    Queue<int> slideOrder;
+
     int currentPictureIndex;
     ImageSource? currentPicture;
     int? pictureSetSelected;
 
     #region ctors
 
-    public PictureSource(IReadOnlyList<FolderCollection> paths, int? selectedPictureSet, SlideMode slideMode, int slideDelay){
+    public PictureSource(IReadOnlyList<FolderCollection> paths, int? selectedPictureSet, SlideMode slideMode, int slideDelay) {
         picturePaths = paths;
         pictureSetSelected = selectedPictureSet;
         this.slideMode = slideMode;
@@ -61,9 +63,9 @@ public class PictureSource : IPictureSource{
         timer.Tick += ChangePictureEvent;
 
         if (pictureSetSelected is not null)
-            RegeneratePictureList(picturePaths[pictureSetSelected!.Value]);
+            pictureList = [..RegeneratePictureList(picturePaths[pictureSetSelected!.Value])];
 
-        ApplySlideMode();
+        slideOrder = new(GenerateImageOrder(pictureList));
     }
 
     #endregion
@@ -107,9 +109,9 @@ public class PictureSource : IPictureSource{
         if (slideMode != SlideMode.Random)
             // random order doesn't make sense to be reponsitioned.
             if (slideOrder.Count < lastPosition)
-                ApplySlideMode();
+                slideOrder = new(GenerateImageOrder(pictureList));
             else
-                for(int discardCount=0; discardCount < lastPosition; ++discardCount)
+                for(var discardCount=0; discardCount < lastPosition; ++discardCount)
                     slideOrder.Dequeue();
     }
     /// <summary>
@@ -144,9 +146,7 @@ public class PictureSource : IPictureSource{
         try{
             var newPath = targetFileAndFolder;
             File.Move(targetFile, newPath);
-            var currentImagePath = pictureList[currentPictureIndex];
-            currentImagePath.Path = newPath;
-            pictureList[currentPictureIndex] = currentImagePath;
+            pictureList[currentPictureIndex] = pictureList[currentPictureIndex] with { Path = newPath };
             Debug.Write("File ");
             Debug.Write(targetFile);
             Debug.Write(" is moved to ");
@@ -167,8 +167,8 @@ public class PictureSource : IPictureSource{
         if (pictureSetSelected is null) return;
 
         pictureSetSelected = setIndex;
-        RegeneratePictureList(picturePaths[setIndex]);
-        ApplySlideMode();
+        pictureList = [..RegeneratePictureList(picturePaths[setIndex])];
+        slideOrder = new(GenerateImageOrder(pictureList));
 
         if (IsStarted){
             pictureSetChanged.OnNext(Unit.Default);
@@ -179,49 +179,37 @@ public class PictureSource : IPictureSource{
     public IObservable<Unit> PictureSetChanged { get; }
     public IObservable<PictureChangedEventArgs> PictureChanged { get; }
 
-    void ApplySlideMode(){
-        if (pictureList.Count == 0)
-            return;
+    IEnumerable<int> GenerateImageOrder(IReadOnlyList<ImagePath> list)
+        => slideMode switch {
+            SlideMode.Sequence => Enumerable.Range(0, list.Count),
+            SlideMode.SortedByFilenamePerFolder => from x in IndexedList(list)
+                                                   group x by Path.GetDirectoryName(x.Value.Path) into g
+                                                   from p in g
+                                                   orderby p.Value.Path
+                                                   select p.Index,
+            SlideMode.SortedByFilenameAllFolders => from x in IndexedList(list)
+                                                    orderby Path.GetFileName(x.Value.Path)
+                                                    select x.Index,
+            SlideMode.SortedByDatePerFolder => from x in IndexedList(list)
+                                               group x by Path.GetDirectoryName(x.Value.Path) into g
+                                               from p in g
+                                               orderby p.Value.FileDate
+                                               select p.Index,
+            SlideMode.SortedByDateAllFolders => from x in IndexedList(list)
+                                                orderby x.Value.FileDate
+                                                select x.Index,
+            SlideMode.Random => GenerateRandomSequence(list.Count),
 
-        slideOrder = new Queue<int>(pictureList.Count);
-        IEnumerable<int> order;
-        switch (slideMode){
-            case SlideMode.Sequence:
-                order = Enumerable.Range(0, pictureList.Count);
-                break;
-            case SlideMode.SortedByFilenamePerFolder:
-                order = from path in pictureList
-                        group path by Path.GetDirectoryName(path.Path) into g
-                        from p in g
-                        orderby p.Path select p.ID;
-                break;
-            case SlideMode.SortedByFilenameAllFolders:
-                order = from path in pictureList orderby Path.GetFileName(path.Path) select path.ID;
-                break;
-            case SlideMode.SortedByDatePerFolder:
-                order = from path in pictureList
-                        group path by Path.GetDirectoryName(path.Path) into g
-                        from p in g
-                        orderby p.FileDate select p.ID;
-                break;
-            case SlideMode.SortedByDateAllFolders:
-                order = from path in pictureList orderby path.FileDate select path.ID;
-                break;
-            case SlideMode.Random:
-                order = GenerateRandomSequence(pictureList.Count);
-                break;
-            default:
-                Trace.WriteLine("Unhandled slide mode " + slideMode);
-                order = Enumerable.Range(0, pictureList.Count);
-                break;
-        }
-        foreach (var i in order){
-            slideOrder.Enqueue(i);
-        }
-    }
+            _ => throw new NotSupportedException($"Unknown slide mode {slideMode}")
+        };
+
     void ChangePictureEvent(object sender, EventArgs e){
         NotifyNextImage();
     }
+
+    static IEnumerable<(int Index, T Value)> IndexedList<T>(IReadOnlyList<T> list)
+        => list.Select((t, i) => (i, t));
+
     static IEnumerable<int> GenerateRandomSequence(int count){
         var sequence = Enumerable.Range(0, count).ToArray();
         ShuffleItemByItem(count, sequence);
@@ -231,7 +219,7 @@ public class PictureSource : IPictureSource{
     }
     static int[] ShuffleSequenceDeck(int count, int[] sequence) {
         var output = new int[sequence.Length];
-        for(int i=0; i < count; ++i){
+        for(var i=0; i < count; ++i){
             var pos1 = MainApp.Rand(count);
             var pos2 = MainApp.Rand(count);
             sequence.Shuffle(pos1, pos2, ref output);
@@ -240,7 +228,7 @@ public class PictureSource : IPictureSource{
         return sequence;
     }
     static void ShuffleItemByItem(int count, int[] sequence){
-        for(int i=0; i < count; ++i){
+        for(var i=0; i < count; ++i){
             var pos1 = MainApp.Rand(count);
             var pos2 = MainApp.Rand(count);
             sequence.Swap(pos1, pos2);
@@ -265,18 +253,18 @@ public class PictureSource : IPictureSource{
         }
     }
     ImageSource? FetchNextPicture(out string fileName, out DateTime fileDate){
-        string pictureFile = String.Empty;
+        var pictureFile = String.Empty;
         try{
             currentPictureIndex = slideOrder.Dequeue();
             if (slideOrder.Count == 0)
-                ApplySlideMode();
+                slideOrder = new(GenerateImageOrder(pictureList));
             fileName = pictureFile = pictureList[currentPictureIndex].Path;
             fileDate = pictureList[currentPictureIndex].FileDate;
-            using(var s = File.OpenRead(pictureFile)){
-                // use stream so file won't be locked.
-                var decoder = BitmapDecoder.Create(s, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
-                return decoder.Frames[0];
-            }
+
+            using var s = File.OpenRead(pictureFile);
+            // use stream so file won't be locked.
+            var decoder = BitmapDecoder.Create(s, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+            return decoder.Frames[0];
         }
         catch (ArgumentException){
             // strange exception thrown from the BitmapDecoder sometimes, dunno why yet.
@@ -292,59 +280,45 @@ public class PictureSource : IPictureSource{
         fileDate = DateTime.MinValue;
         return null;
     }
-    void RegeneratePictureList(FolderCollection folderList){
-        if (folderList.Count == 0){
-            pictureList = new List<ImagePath>();
-            return;
-        }
-        pictureList = new List<ImagePath>(folderList.Count * 100 /* expected files in sub-folders */);
-        var excludedFolders =
-            (from folder in folderList
-             where folder.Inclusion == InclusionMode.Exclude
-             select folder.Path).ToArray();
-        var id = 0;
-        foreach (var folder in folderList){
-            IEnumerable<string> fileList;
-            switch (folder.Inclusion){
-                case InclusionMode.Recursive:
-                    fileList = GetImageFileRecursive(folder.Path, excludedFolders);
-                    break;
-                case InclusionMode.Single:
-                    fileList = GetImageFileSingle(folder.Path);
-                    break;
-                case InclusionMode.Exclude:
-                    continue;
-                default:
-                    Debug.WriteLine("Unhandled folder inclusion " + folder.Inclusion);
-                    continue;
-            }
-            foreach (var filePath in fileList){
-                pictureList.Add(new ImagePath { ID = id, Path = filePath, FileDate = File.GetCreationTime(filePath)});
-                ++id;
-            }
-        }
+
+    [Pure]
+    static IEnumerable<ImagePath> RegeneratePictureList(FolderCollection folderList) {
+        var excludedFolders = (from folder in folderList
+                               where folder.Inclusion == InclusionMode.Exclude
+                               select folder.Path
+                              ).ToArray();
+        var isExcluded = IsExcluded(excludedFolders);
+
+        return from folder in folderList
+               let fileList = folder.Inclusion switch {
+                   InclusionMode.Recursive => isExcluded(folder.Path) ? [] : GetImageFileRecursive(isExcluded, folder.Path),
+                   InclusionMode.Single    => GetImageFileSingle(folder.Path),
+                   InclusionMode.Exclude   => [],
+
+                   _ => throw new NotSupportedException($"Unknown inclusion mode {folder.Inclusion}")
+               }
+               from filePath in fileList
+               select new ImagePath(filePath, File.GetCreationTime(filePath));
     }
 
+    [Pure]
     static IEnumerable<string> GetImageFileSingle(string path)
         => from file in Directory.GetFiles(path)
            where SupportedImage.Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase)
            select file;
 
-    static IEnumerable<string> GetImageFileRecursive(string path, string[] excludedFolders){
-        if (Array.FindIndex(excludedFolders, folder => path.StartsWith(folder, StringComparison.OrdinalIgnoreCase)) != -1){
-            Debug.WriteLine("Exclude: " + path);
-            return [];
-        }
+    [Pure]
+    static IEnumerable<string> GetImageFileRecursive(Func<string, bool> isExcluded, string path){
         var subImageFiles = from dir in Directory.GetDirectories(path)
-                            from file in GetImageFileRecursive(dir, excludedFolders)
+                            where !isExcluded(dir)
+                            from file in GetImageFileRecursive(isExcluded, dir)
                             select file;
-        return GetImageFileSingle(path).Union(subImageFiles);
+        return GetImageFileSingle(path).Concat(subImageFiles);
     }
-    #region Structures
-    struct ImagePath{
-        public int ID;
-        public string Path;
-        public DateTime FileDate;
-    }
-    #endregion
+
+    [Pure]
+    static Func<string, bool> IsExcluded(string[] excludedFolders)
+        => path => Array.FindIndex(excludedFolders, folder => path.StartsWith(folder, StringComparison.OrdinalIgnoreCase)) != -1;
+
+    readonly record struct ImagePath(string Path, DateTime FileDate);
 }

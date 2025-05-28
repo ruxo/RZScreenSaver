@@ -2,50 +2,51 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
 
-namespace RZScreenSaver.SlidePages{
-    /// <summary>
-    /// Interaction logic for SimpleSlide.xaml
-    /// </summary>
-    public partial class SimpleSlide{
-        public SimpleSlide() {
-            InitializeComponent();
-            imagePathText.Visibility = AppDeps.Settings.Value.ShowTitle ? Visibility.Visible : Visibility.Collapsed;
-        }
-        public override bool ShowTitle{
-            get { return imagePathText.Visibility == Visibility.Visible; }
-            set{ imagePathText.Visibility = value ? Visibility.Visible : Visibility.Collapsed; }
-        }
-        protected override void OnPictureSetChanged(){
-            slideShowImage.Source = null;
-        }
-        protected override void OnShowPicture(PictureChangedEventArgs arg){
-            var image = arg.Picture;
-            var orientation = GetImageOrientation(image);
+namespace RZScreenSaver.SlidePages;
 
-            imagePathText.Content = FormatImageDescription(image, arg.Path, arg.FileDate, orientation);
+/// <summary>
+/// Interaction logic for SimpleSlide.xaml
+/// </summary>
+public partial class SimpleSlide{
+    public SimpleSlide() {
+        InitializeComponent();
+        imagePathText.Visibility = AppDeps.Settings.Value.ShowTitle ? Visibility.Visible : Visibility.Collapsed;
+    }
+    public override bool ShowTitle{
+        get => imagePathText.Visibility == Visibility.Visible;
+        set => imagePathText.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
+    }
+    public override void OnPictureSetChanged(){
+        slideShowImage.Source = null;
+    }
+    public override void OnShowPicture(PictureChangedEventArgs arg){
+        var image = arg.Picture;
+        var orientation = GetImageOrientation(image);
 
-            switch (DisplayMode){
+        imagePathText.Content = FormatImageDescription(image, arg.Path, arg.FileDate, orientation);
+
+        switch (DisplayMode){
             case DisplayMode.OriginalOrFit:
                 slideShowImage.Stretch = canImageFitScreen(image, orientation)? Stretch.None : Stretch.Uniform;
                 break;
             case DisplayMode.OriginalOrFillCrop:
                 slideShowImage.Stretch = canImageFitScreen(image, orientation) ? Stretch.None : Stretch.UniformToFill;
                 break;
-                // default just ignore.
-            }
-            slideShowImage.Source = image;
-            imageOrientation.Angle = -(orientation ?? 0);
-            if (!IsLandscape(orientation)){
-                var parentWindow = (FrameworkElement) Parent;
-                slideShowImage.Width = parentWindow.Height;
-                slideShowImage.Height = parentWindow.Width;
-            } else{
-                slideShowImage.Width = slideShowImage.Height = double.NaN;
-            }
+            // default just ignore.
         }
-        protected override void OnDisplayModeChanged() {
-            base.OnDisplayModeChanged();
-            switch (DisplayMode){
+        slideShowImage.Source = image;
+        imageOrientation.Angle = -(orientation ?? 0);
+        if (!IsLandscape(orientation)){
+            var parentWindow = (FrameworkElement) Parent;
+            slideShowImage.Width = parentWindow.Height;
+            slideShowImage.Height = parentWindow.Width;
+        } else{
+            slideShowImage.Width = slideShowImage.Height = double.NaN;
+        }
+    }
+    protected override void OnDisplayModeChanged() {
+        base.OnDisplayModeChanged();
+        switch (DisplayMode){
             case DisplayMode.Original:
                 slideShowImage.Stretch = Stretch.None;
                 break;
@@ -65,14 +66,13 @@ namespace RZScreenSaver.SlidePages{
             default:
                 Trace.WriteLine("Unhandled mode: " + DisplayMode);
                 break;
-            }
         }
-        bool canImageFitScreen(ImageSource image, int? orientation){
-            Size imageSize;
-            GetImageSizeByOrientation(image, orientation, out imageSize);
+    }
+    bool canImageFitScreen(ImageSource image, int? orientation){
+        Size imageSize;
+        GetImageSizeByOrientation(image, orientation, out imageSize);
 
-            var parentWindow = Parent as FrameworkElement;
-            return parentWindow != null && imageSize.Width <= parentWindow.Width && imageSize.Height <= parentWindow.Height;
-        }
+        var parentWindow = Parent as FrameworkElement;
+        return parentWindow != null && imageSize.Width <= parentWindow.Width && imageSize.Height <= parentWindow.Height;
     }
 }

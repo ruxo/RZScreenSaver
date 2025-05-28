@@ -14,7 +14,7 @@ namespace RZScreenSaver.Graphics.ColorSpaces{
             var rgb = result.Data;
             var hsl = source.Data;
 
-            for (int i = 0; i < hsl.Length; i += 4){
+            for (var i = 0; i < hsl.Length; i += 4){
                 rgb[i + Alpha] = (byte) (hsl[i + Hsla32.Alpha] * byte.MaxValue);
 
                 var hue = hsl[i + Hsla32.Hue];

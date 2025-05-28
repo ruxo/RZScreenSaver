@@ -38,7 +38,7 @@ public static class MainApp{
         Debug.WriteLine("Authenticated? " + System.Threading.Thread.CurrentPrincipal.Identity.IsAuthenticated);
 
         Debug.WriteLine("arg count = " + arg.Length);
-        for(int i=0; i < arg.Length; ++i)
+        for(var i=0; i < arg.Length; ++i)
             Debug.WriteLine($"arg #{i.ToString()} = {arg[i]}");
 
         if (AppDeps.Settings.Value.PicturePaths.Count > 0)
@@ -102,10 +102,10 @@ public static class MainApp{
             // Configuration mode
             // E.g. from "/c:12345" we need to capture 12345, which is the parent HWND in decimal
             var settingsParam = new Regex(@"/c:(\d+)", RegexOptions.IgnoreCase);
-            Match settingsParamMatch = settingsParam.Match(arg[0]);
+            var settingsParamMatch = settingsParam.Match(arg[0]);
             previewWindow = IntPtr.Zero;
             if (settingsParamMatch.Success){
-                CaptureCollection captures = settingsParamMatch.Groups[1].Captures;
+                var captures = settingsParamMatch.Groups[1].Captures;
                 if (captures.Count == 1){
                     long hwnd;
                     if (!long.TryParse(captures[0].ToString(), out hwnd))

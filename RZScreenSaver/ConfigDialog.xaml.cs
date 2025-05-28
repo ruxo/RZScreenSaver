@@ -73,7 +73,7 @@ partial class ConfigDialog{
         folderSet.AddRange(AppDeps.Settings.Value.PicturePaths);
         selectedIndex = AppDeps.Settings.Value.PictureSetSelected;
 
-        for(int setIndex=0; setIndex < NumberOfPictureSet; ++setIndex)
+        for(var setIndex=0; setIndex < NumberOfPictureSet; ++setIndex)
             if (setIndex >= folderSet.Count)
                 folderSet.Add(new FolderCollection());
             else
@@ -182,7 +182,7 @@ partial class ConfigDialog{
         if (e.Key == Key.Delete && currentFolderListView.SelectedItems.Count > 0){
             e.Handled = true;
             var selectedFolders = currentFolderListView.SelectedItems.CastToArray<FolderInclusion>();
-            foreach (FolderInclusion folder in selectedFolders){
+            foreach (var folder in selectedFolders){
                 currentFolderListView.Items.Remove(folder);
                 currentFolderList.Remove(folder);
             }

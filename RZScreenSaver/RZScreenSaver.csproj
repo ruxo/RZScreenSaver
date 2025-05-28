@@ -111,6 +111,7 @@
     <Compile Include="Graphics\RawBitmap.cs" />
     <Compile Include="IListExtension.cs" />
     <Compile Include="IPictureSource.cs" />
+    <Compile Include="IsExternalInit.cs" />
     <Compile Include="MainApp.cs" />
     <Compile Include="PageHost.cs" />
     <Compile Include="PictureSource.cs" />

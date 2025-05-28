@@ -20,7 +20,7 @@ namespace RZScreenSaver.Graphics.ColorSpaces{
             var hsl = result.Data;
             Debug.Assert(hsl.Length == data.Length);
 
-            for (int pixel = 0; pixel < data.Length; pixel += Dpp)
+            for (var pixel = 0; pixel < data.Length; pixel += Dpp)
             {
                 var realRed = (float)data[pixel + red] / byte.MaxValue;
                 var realGreen = (float)data[pixel + green] / byte.MaxValue;
@@ -66,7 +66,7 @@ namespace RZScreenSaver.Graphics.ColorSpaces{
 #if DEBUG
             var watch = Stopwatch.StartNew();
 #endif
-            for(int pixel=0; pixel < Data.Length; pixel += Dpp){
+            for(var pixel=0; pixel < Data.Length; pixel += Dpp){
                 var value = sfunc(Data[pixel + Saturation]);
                 if (value > 1F)
                     value = 1F;
@@ -82,7 +82,7 @@ namespace RZScreenSaver.Graphics.ColorSpaces{
         const float Zero = 1e-4F;
         public Hsla32 Desaturate(float percent, float cutoff){
             Debug.Assert(percent > 0);
-            for(int pixel=0; pixel < Data.Length; pixel += Dpp){
+            for(var pixel=0; pixel < Data.Length; pixel += Dpp){
                 var value = Data[pixel + Saturation] * percent;
                 if (value < cutoff)
                     value = 0;

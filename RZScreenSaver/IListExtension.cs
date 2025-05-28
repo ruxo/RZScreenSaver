@@ -7,7 +7,7 @@ namespace RZScreenSaver{
     static class IListExtension{
         public static T[] CastToArray<T>(this IList list){
             var result = new T[list.Count];
-            for(int i=0; i < result.Length; ++i)
+            for(var i=0; i < result.Length; ++i)
                 result[i] = (T) list[i];
             return result;
         }
@@ -43,7 +43,7 @@ namespace RZScreenSaver{
             }
         }
         public static void Swap<T>(this IList<T> list, int pos1, int pos2){
-            T temp = list[pos1];
+            var temp = list[pos1];
             list[pos1] = list[pos2];
             list[pos2] = temp;
         }
