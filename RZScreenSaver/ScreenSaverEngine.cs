@@ -38,9 +38,9 @@ sealed class ScreenSaverEngine{
         Cursor.Hide();
         return null;
     }
-    static ScreenSaver ScreenSaverFactory(IPictureSource source, Rect rect, ISlidePage page){
-        return new ScreenSaver(source, rect) { SlidePage = page};
-    }
+    static ScreenSaver ScreenSaverFactory(IPictureSource source, Rect rect, ISlidePage page)
+        => new(source, rect) { SlidePage = page};
+
     void ScreenSaverConfigurer(ScreenSaver saver){
         saver.SlidePage.ShowTitle = AppDeps.Settings.Value.ShowTitle;
         saver.Closed += OnSaverClosed;

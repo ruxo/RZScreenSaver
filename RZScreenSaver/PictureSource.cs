@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
@@ -45,7 +46,7 @@ public class PictureSource : IPictureSource{
     readonly Dispatcher myDispatcher;
 
     List<ImagePath> pictureList = new();
-    Queue<int> slideOrder = new();
+    ConcurrentQueue<int> slideOrder = new();
 
     int currentPictureIndex;
     ImageSource? currentPicture;
@@ -65,7 +66,7 @@ public class PictureSource : IPictureSource{
         timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(slideDelay) };
         timer.Tick += ChangePictureEvent;
 
-        var timing = Observable.Timer(TimeSpan.FromSeconds(1)).StartWith(0).Select(_ => new List<ImagePath>());
+        var timing = Observable.Timer(TimeSpan.FromSeconds(2)).StartWith(0).Select(_ => new List<ImagePath>());
 
         List<ImagePath>? lastList = null;
         var source = sourceSetChanged.SelectMany(fc => RegeneratePictureList(fc, pictureList.Count).Append(ImagePath.Empty));
@@ -148,8 +149,8 @@ public class PictureSource : IPictureSource{
             if (slideOrder.Count < lastPosition)
                 slideOrder = new(GenerateImageOrder(pictureList));
             else
-                for(var discardCount=0; discardCount < lastPosition; ++discardCount)
-                    slideOrder.Dequeue();
+                for (var discardCount = 0; discardCount < lastPosition; ++discardCount)
+                    slideOrder.TryDequeue(out _);
     }
     /// <summary>
     /// Delete current picture from physical disk storage!
@@ -298,10 +299,9 @@ public class PictureSource : IPictureSource{
             if (slideOrder.Count == 0)
                 slideOrder = new(GenerateImageOrder(pictureList));
 
-            if (slideOrder.Count == 0)
+            if (!slideOrder.TryDequeue(out currentPictureIndex))
                 return null;
 
-            currentPictureIndex = slideOrder.Dequeue();
             fileName = pictureFile = pictureList[currentPictureIndex].Path;
             fileDate = pictureList[currentPictureIndex].FileDate;
 

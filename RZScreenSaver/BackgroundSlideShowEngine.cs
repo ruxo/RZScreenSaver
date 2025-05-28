@@ -6,7 +6,7 @@ sealed class BackgroundSlideShowEngine(IPictureSource source, PageHost[] slideSh
 {
     public void SwitchToSet(int setIndex) {
         source.SwitchToSet(setIndex);
-        AppDeps.Settings.Value.BackgroundPictureSetSelected = setIndex;
+        AppDeps.Settings.Value.BackgroundPictureSetSelected = AppDeps.Settings.Value.PicturePaths.Count > setIndex? setIndex : null;
         AppDeps.Settings.Save();
     }
 
