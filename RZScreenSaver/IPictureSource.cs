@@ -4,7 +4,7 @@ using System.Windows.Media;
 
 namespace RZScreenSaver;
 
-public interface IPictureSource{
+public interface IPictureSource : IDisposable {
     ImageSource? CurrentPicture { get; }
     string CurrentPictureFile { get; }
     int PictureIndex { get; }

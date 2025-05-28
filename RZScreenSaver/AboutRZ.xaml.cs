@@ -52,6 +52,7 @@ public partial class AboutRz{
         e.Handled = true;
         new ConfigDialog().ShowDialog();
     }
+
     void OnSwitchSet(object sender, RoutedEventArgs e){
         var menuItem = (MenuItem) sender;
         var setIndex = Int32.Parse(menuItem.Tag.ToString());

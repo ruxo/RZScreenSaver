@@ -109,6 +109,7 @@
     <Compile Include="Graphics\ColorSpaces\Hsla32.cs" />
     <Compile Include="Graphics\ColorSpaces\Rgba32.cs" />
     <Compile Include="Graphics\RawBitmap.cs" />
+    <Compile Include="Helpers\ObservableExtensions.cs" />
     <Compile Include="IListExtension.cs" />
     <Compile Include="IPictureSource.cs" />
     <Compile Include="IsExternalInit.cs" />
@@ -194,7 +195,6 @@
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <Resource Include="images\Clipping Text.png" />
     <Resource Include="images\RZ Normal Badge Logo.png" />

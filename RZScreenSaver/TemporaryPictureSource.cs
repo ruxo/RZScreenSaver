@@ -7,39 +7,40 @@ using System.Windows.Media;
 
 namespace RZScreenSaver;
 
-class TemporaryPictureSource : IPictureSource{
-    readonly IPictureSource mainSource;
+class TemporaryPictureSource(IPictureSource mainSource, SlideMode slideMode, int delayTime) : IPictureSource
+{
     IPictureSource? tempSource;
-    readonly SlideMode mode;
-    readonly int delayTime;
+
+    #region ctor
 
     public TemporaryPictureSource(IReadOnlyList<FolderCollection> picturePaths, int? pictureSetSelected, SlideMode slideMode, int delayTime)
         : this(new PictureSource(picturePaths, pictureSetSelected, slideMode, delayTime), slideMode, delayTime){
     }
 
-    public TemporaryPictureSource(IPictureSource mainSource, SlideMode slideMode, int delayTime){
-        this.mainSource = mainSource;
-        PictureChanged = mainSource.PictureChanged;
-        mode = slideMode;
-        this.delayTime = delayTime;
+    public void Dispose() {
+        mainSource.Dispose();
+        tempSource?.Dispose();
     }
+
+    #endregion
+
     public bool TempMode => tempSource is not null;
 
     public void SwitchToCurrentFolder(){
         var currentFolder = Path.GetDirectoryName(CurrentPictureFile)!;
-        if (TempMode)
-            tempSource!.Stop();
-        else if (!mainSource.IsPaused)
+        if (!TempMode && !mainSource.IsPaused)
             mainSource.Pause();
-        tempSource = new PictureSource([new() { {currentFolder, InclusionMode.Recursive} }], 0, mode, delayTime);
+
+        tempSource?.Dispose();
+        tempSource = new PictureSource([new() { {currentFolder, InclusionMode.Recursive} }], 0, slideMode, delayTime);
         PictureChanged = tempSource.PictureChanged.Merge(mainSource.PictureChanged);
         tempSource.Start();
     }
+
     public void RevertToMainSet(){
-        if (tempSource != null){
-            tempSource.Stop();
-            tempSource = null;
-        }
+        tempSource?.Dispose();
+        tempSource = null;
+
         if (mainSource.IsPaused)
             mainSource.Resume();
     }
@@ -79,7 +80,7 @@ class TemporaryPictureSource : IPictureSource{
         return Source.MoveCurrentPictureTo(targetFolder);
     }
     public IObservable<Unit> PictureSetChanged => mainSource.PictureSetChanged;
-    public IObservable<PictureChangedEventArgs> PictureChanged { get; private set; }
+    public IObservable<PictureChangedEventArgs> PictureChanged { get; private set; } = mainSource.PictureChanged;
 
     #endregion
 }

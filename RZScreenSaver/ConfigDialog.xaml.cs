@@ -151,7 +151,7 @@ partial class ConfigDialog{
             EnableButtons(true);
         }
     }
-    void onContentChanged(object sender,RoutedEventArgs e) {
+    void OnContentChanged(object sender,RoutedEventArgs e) {
         Debug.WriteLine("Event:" + e + ", Source=" + e.Source);
         var selectionArg = e as SelectionChangedEventArgs;
         EnableButtons(selectionArg == null || selectionArg.RemovedItems.Count > 0);
@@ -215,6 +215,6 @@ partial class ConfigDialog{
     };
     void OnChangeSlideMode(object sender, SelectionChangedEventArgs e){
         AppDeps.Settings.Value.LastShownIndex = 0;
-        onContentChanged(sender, e);
+        OnContentChanged(sender, e);
     }
 }

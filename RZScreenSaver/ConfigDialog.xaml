@@ -17,9 +17,9 @@
             <DockPanel DockPanel.Dock="Top">
                 <GroupBox Header="Saver mode" DockPanel.Dock="Right">
                     <StackPanel>
-                        <RadioButton Name="asSlideShowMode" IsChecked="True" Checked="onContentChanged">Slide show</RadioButton>
-                        <RadioButton Name="asPhotoCollageMode" IsChecked="False" Checked="onContentChanged">Photo collage</RadioButton>
-                        <RadioButton Name="asMixedMode" IsChecked="False" Checked="onContentChanged">Mixed</RadioButton>
+                        <RadioButton Name="asSlideShowMode" IsChecked="True" Checked="OnContentChanged">Slide show</RadioButton>
+                        <RadioButton Name="asPhotoCollageMode" IsChecked="False" Checked="OnContentChanged">Photo collage</RadioButton>
+                        <RadioButton Name="asMixedMode" IsChecked="False" Checked="OnContentChanged">Mixed</RadioButton>
                     </StackPanel>
                 </GroupBox>
                 <Grid VerticalAlignment="Top">
@@ -46,7 +46,7 @@
                         <rz:SlideMode>Random</rz:SlideMode>
                     </ComboBox>
                     <Label Name="label3" Grid.Column="2">Display Mode:</Label>
-                    <ComboBox Name="displayModeList" Margin="3" Grid.Row="1" Grid.Column="2" SelectionChanged="onContentChanged">
+                    <ComboBox Name="displayModeList" Margin="3" Grid.Row="1" Grid.Column="2" SelectionChanged="OnContentChanged">
                         <rz:DisplayMode>Original</rz:DisplayMode>
                         <rz:DisplayMode>Stretch</rz:DisplayMode>
                         <rz:DisplayMode>Fit</rz:DisplayMode>
@@ -68,10 +68,10 @@
                 <Button Name="addSingleButton" Margin="3" DockPanel.Dock="Right" Click="OnAddSingleFolder">Add _Single</Button>
                     <Label VerticalContentAlignment="Bottom" Target="{Binding ElementName=imageFolderDefault1}" DockPanel.Dock="Left">Picture _Folder Default:</Label>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <RadioButton Name="imageFolderDefault1" Margin="3,0" IsChecked="True" Checked="onContentChanged">1</RadioButton>
-                    <RadioButton Name="imageFolderDefault2" Margin="3,0" Checked="onContentChanged">2</RadioButton>
-                    <RadioButton Name="imageFolderDefault3" Margin="3,0" Checked="onContentChanged">3</RadioButton>
-                    <RadioButton Name="imageFolderDefault4" Margin="3,0" Checked="onContentChanged">4</RadioButton>
+                    <RadioButton Name="imageFolderDefault1" Margin="3,0" IsChecked="True" Checked="OnContentChanged">1</RadioButton>
+                    <RadioButton Name="imageFolderDefault2" Margin="3,0" Checked="OnContentChanged">2</RadioButton>
+                    <RadioButton Name="imageFolderDefault3" Margin="3,0" Checked="OnContentChanged">3</RadioButton>
+                    <RadioButton Name="imageFolderDefault4" Margin="3,0" Checked="OnContentChanged">4</RadioButton>
                 </StackPanel>
             </DockPanel>
             <TabControl Name="imageFolderTab">
