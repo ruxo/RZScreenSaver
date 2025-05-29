@@ -71,7 +71,7 @@ public static class MainApp{
         var a = command switch {
             MainCommand.ShowSaver       => w.SaveScreen(),
             MainCommand.PreviewSaver    => w.PreviewScreen(previewWindow),
-            MainCommand.ConfigureSaver  => w.ConfigureSaver(previewWindow),
+            MainCommand.ConfigureSaver  => ScreenSaverEngine.ConfigureSaver(previewWindow),
             MainCommand.RunAsBackground => w.RunAsBackground(),
 
             _ => throw new NotSupportedException("FATAL: Unhandle main command " + command)

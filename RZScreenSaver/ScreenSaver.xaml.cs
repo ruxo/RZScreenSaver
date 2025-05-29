@@ -9,6 +9,7 @@ using KeyEventArgs=System.Windows.Input.KeyEventArgs;
 using KeyEventHandler=System.Windows.Input.KeyEventHandler;
 using MessageBox=System.Windows.MessageBox;
 using MouseEventArgs=System.Windows.Input.MouseEventArgs;
+using Clipboard=System.Windows.Clipboard;
 
 namespace RZScreenSaver;
 
@@ -81,6 +82,9 @@ partial class ScreenSaver{
                 return;
             case Key.F8:
                 DeleteOrMoveCurrentFile();
+                return;
+            case Key.F9:
+                Clipboard.SetText(pictureSource.CurrentPictureFile);
                 return;
             case Key.F12:
                 using(new UserInteractionScope(this)){

@@ -300,6 +300,7 @@ public class PictureSource : IPictureSource{
         List<ImagePath>? lastList = null;
         var source = RegeneratePictureList(fc, startId).Append(ImagePath.Empty).ToObservable(ThreadPoolScheduler.Instance);
 
+        var firstSet = true;
         var ended = false;
         var disposables = Disposable.Empty;
         disposables = timing.CombineLatest(source, (list, image) => {
@@ -318,11 +319,18 @@ public class PictureSource : IPictureSource{
                              })
                             .Where(x => x?.Count > 0)
                             .Subscribe(list => {
-                                 Debug.WriteLine($"Picture list changed. {list!.Count} pictures.");
+                                 Trace.WriteLine($"Picture list changed. {list!.Count} pictures.");
+
                                  pictureList.AddRange(list);
 
+                                 // TODO: This queue order is not correct. We should regenerate the queue from the whole set.
                                  foreach (var i in GenerateImageOrder(list))
                                      slideOrder.Enqueue(i);
+
+                                 if (firstSet){
+                                     firstSet = false;
+                                     myDispatcher.InvokeAsync(NotifyNextImage);
+                                 }
 
                                  if (ended){
                                      Debug.WriteLine("Picture list ended.");

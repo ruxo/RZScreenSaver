@@ -144,7 +144,7 @@ sealed class ScreenSaverEngine{
         source.Start();
         return null;
     }
-    public Application? ConfigureSaver(IntPtr previewWindow){
+    public static Application? ConfigureSaver(IntPtr previewWindow){
         var configDialog = new ConfigDialog();
         if (previewWindow != IntPtr.Zero){
             new WindowInteropHelper(configDialog){Owner = previewWindow};
