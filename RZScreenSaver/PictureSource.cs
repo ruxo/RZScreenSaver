@@ -292,22 +292,16 @@ public class PictureSource : IPictureSource{
             AppDeps.Settings.UpdateShownIndex(pictureSetSelected!.Value, currentPictureIndex);
             return decoder.Frames[0];
         }
-        catch (ArgumentException){
-            // strange exception thrown from the BitmapDecoder sometimes, dunno why yet.
-            Trace.Write("Cannot process file (.Net error): ");
-            Trace.WriteLine(pictureFile);
-        }
         catch (Exception e){
             switch (e){
-                case NotSupportedException: Trace.WriteLine(pictureFile + " is not a recognized image format!"); break;
+                case ArgumentException or NotSupportedException: Trace.WriteLine(pictureFile + " is not a recognized image format!"); break;
                 case FileNotFoundException: Trace.WriteLine(pictureFile + " is no longer existed"); break;
                 default: throw;
             }
             list.RemoveAt(currentPictureIndex);
-            AppDeps.Settings.InvalidPictureSet(pictureSetSelected!.Value);
+            AppDeps.Settings.SavePictureSet(pictureSetSelected!.Value, pictureList, pictureMode, currentPictureIndex, DateTimeOffset.MinValue);
             goto retry;
         }
-        return null;
     }
 
     #region Picture loaders
