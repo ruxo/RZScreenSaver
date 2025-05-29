@@ -35,7 +35,7 @@ public class PictureChangedEventArgs : EventArgs{
 }
 
 public class PictureSource : IPictureSource{
-    static readonly string[] SupportedImage = [".bmp", ".gif", ".jpg", ".jpeg", ".png", ".tiff", ".ico"];
+    static readonly string[] SupportedImage = [".bmp", ".gif", ".jpg", ".jpeg", ".png", ".tiff", ".ico", ".heic"];
 
     readonly DispatcherTimer timer;
     readonly IReadOnlyList<FolderCollection> picturePaths;
@@ -263,6 +263,7 @@ public class PictureSource : IPictureSource{
         pictureChanged.OnNext(new PictureChangedEventArgs(fileName, fileDate, image));
     }
     ImageSource? FetchNextPicture(out string fileName, out DateTime fileDate){
+    retry:
         fileName = String.Empty;
         fileDate = DateTime.MinValue;
         var list = pictureList;
@@ -296,10 +297,15 @@ public class PictureSource : IPictureSource{
             Trace.Write("Cannot process file (.Net error): ");
             Trace.WriteLine(pictureFile);
         }
-        catch (NotSupportedException){
-            Trace.WriteLine(pictureFile + " is not a recognized image format!");
+        catch (Exception e){
+            switch (e){
+                case NotSupportedException: Trace.WriteLine(pictureFile + " is not a recognized image format!"); break;
+                case FileNotFoundException: Trace.WriteLine(pictureFile + " is no longer existed"); break;
+                default: throw;
+            }
             list.RemoveAt(currentPictureIndex);
             AppDeps.Settings.InvalidPictureSet(pictureSetSelected!.Value);
+            goto retry;
         }
         return null;
     }
