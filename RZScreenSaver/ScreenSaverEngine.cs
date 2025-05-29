@@ -35,10 +35,10 @@ sealed class ScreenSaverEngine{
 
     #region Save Screen
 
-    public Application? SaveScreen(){
+    public Application SaveScreen(){
         savers = CreatePageHostAndRun(ScreenSaverFactory, ScreenSaverConfigurer);
         Cursor.Hide();
-        return null;
+        return new Application();
     }
     static ScreenSaver ScreenSaverFactory(IPictureSource source, Rect rect, ISlidePage page)
         => new(source, rect) { SlidePage = page};
@@ -87,7 +87,7 @@ sealed class ScreenSaverEngine{
         aboutThread.SetApartmentState(ApartmentState.STA);
         aboutThread.Start();
 
-        return null;
+        return new Application();
     }
 
     public class ForegroundDomain : MarshalByRefObject{
@@ -121,7 +121,7 @@ sealed class ScreenSaverEngine{
     }
     #endregion
 
-    public Application? PreviewScreen(IntPtr previewWindow){
+    public Application PreviewScreen(IntPtr previewWindow){
         Win32.RECT parentRect;
         Win32.GetWindowRect(previewWindow, out parentRect);
 
@@ -134,8 +134,9 @@ sealed class ScreenSaverEngine{
         wpfWin32.RootVisual = (Visual) slidePage;
         wpfWin32.Disposed += delegate { Application.Current.Shutdown(); };
         source.Start();
-        return null;
+        return new Application();
     }
+
     public static Application? ConfigureSaver(IntPtr previewWindow){
         var configDialog = new ConfigDialog();
         if (previewWindow != IntPtr.Zero){

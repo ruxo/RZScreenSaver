@@ -75,8 +75,8 @@ public static class MainApp{
             MainCommand.RunAsBackground => w.RunAsBackground(),
 
             _ => throw new NotSupportedException("FATAL: Unhandle main command " + command)
-        } ?? new Application();
-        return a.Run();
+        };
+        return a?.Run() ?? 0;
     }
     static MainCommand ExtractCommand(string[] arg, out IntPtr previewWindow){
         if (arg.Length == 0){
