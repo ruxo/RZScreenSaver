@@ -37,7 +37,7 @@
                         <wf:NumericUpDown x:Name="slideDelayInput" Minimum="3" Maximum="99" ForeColor="Black" />
                     </WindowsFormsHost>
                     <Label Name="label2" Grid.Row="0" Grid.Column="1">Slide Mode:</Label>
-                    <ComboBox Name="slideModeList" Margin="3" Grid.Row="1" Grid.Column="1" SelectionChanged="OnChangeSlideMode">
+                    <ComboBox Name="slideModeList" Margin="3" Grid.Row="1" Grid.Column="1">
                         <rz:SlideMode>Sequence</rz:SlideMode>
                         <rz:SlideMode>SortedByDateAllFolders</rz:SlideMode>
                         <rz:SlideMode>SortedByFilenameAllFolders</rz:SlideMode>

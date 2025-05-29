@@ -131,7 +131,6 @@ copy RZScreenSaver.exe.config RZScreenSaver.scr.config
     </Compile>
     <Compile Include="SlidePages\SlidePage.cs" />
     <Compile Include="SlidePages\SlidePageFactory.cs" />
-    <Compile Include="TemporaryPictureSource.cs" />
     <Compile Include="UI\Postcard.xaml.cs">
       <DependentUpon>Postcard.xaml</DependentUpon>
     </Compile>

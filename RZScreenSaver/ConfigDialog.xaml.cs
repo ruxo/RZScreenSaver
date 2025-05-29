@@ -213,8 +213,4 @@ partial class ConfigDialog{
         Description = "Select a folder containing any picture.",
         ShowNewFolderButton = false,
     };
-    void OnChangeSlideMode(object sender, SelectionChangedEventArgs e){
-        AppDeps.Settings.Value.LastShownIndex = 0;
-        OnContentChanged(sender, e);
-    }
 }

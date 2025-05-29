@@ -16,7 +16,6 @@ public interface IPictureSource : IDisposable {
     void Stop();
     void SwitchToSet(int setIndex);
 
-    void RestorePicturePosition(int lastPosition);
     bool DeleteCurrentPicture();
     bool MoveCurrentPictureTo(string targetFileAndFolder);
 

@@ -30,6 +30,8 @@ sealed class NullSaverEngine : ISaverEngine
 }
 
 sealed class ScreenSaverEngine{
+    ScreenSaver[] savers = [];
+    IPictureSource pictureSource;
 
     #region Save Screen
 
@@ -44,17 +46,7 @@ sealed class ScreenSaverEngine{
     void ScreenSaverConfigurer(ScreenSaver saver){
         saver.SlidePage.ShowTitle = AppDeps.Settings.Value.ShowTitle;
         saver.Closed += OnSaverClosed;
-        saver.HandleKey += OnHandleKeyUp;
         saver.Show();
-    }
-    void OnHandleKeyUp(object sender, KeyEventArgs e){
-        if (e.Key == Key.F11){
-            e.Handled = true;
-            pictureSource.SwitchToCurrentFolder();
-        } else if (e is { Key: Key.System, SystemKey: Key.F10 }){
-            e.Handled = true;
-            pictureSource.RevertToMainSet();
-        }
     }
 
     #endregion
@@ -65,7 +57,7 @@ sealed class ScreenSaverEngine{
         var pictureSet = AppDeps.Settings.Value.PicturePaths;
         var selectedIndex = AppDeps.Settings.Value.BackgroundPictureSetSelected;
 
-        pictureSource = new TemporaryPictureSource(pictureSet, selectedIndex, AppDeps.Settings.Value.SlideMode, AppDeps.Settings.Value.SlideShowDelay);
+        pictureSource = new PictureSource(pictureSet, selectedIndex, AppDeps.Settings.Value.SlideShowDelay);
         var slideShowList = CreatePageHostAndRun(PageHostFactory, PageHostConfigurer, pictureSource);
 
         var screenSaverCheck = new DispatcherTimer(DispatcherPriority.Background) {
@@ -156,11 +148,7 @@ sealed class ScreenSaverEngine{
     T[] CreatePageHostAndRun<T>(Func<IPictureSource,Rect,ISlidePage,T> hostCreator, Action<T> hostConfigurer) where T : PageHost
         => CreatePageHostAndRun(hostCreator, hostConfigurer, CreateSourceFromSettings());
 
-    static T[] CreatePageHostAndRun<T>(Func<IPictureSource,Rect,ISlidePage,T> hostCreator, Action<T> hostConfigurer, IPictureSource source)
-        where T : PageHost{
-        if (AppDeps.Settings.Value.LastShownIndex is {} shownIndex)
-            source.RestorePicturePosition(shownIndex);
-
+    static T[] CreatePageHostAndRun<T>(Func<IPictureSource,Rect,ISlidePage,T> hostCreator, Action<T> hostConfigurer, IPictureSource source) where T : PageHost{
         var slideCreator = SlidePageFactory.Create(AppDeps.Settings.Value.SaverMode);
         var result = (from screen in Screen.AllScreens
                       let b = screen.Bounds
@@ -173,9 +161,8 @@ sealed class ScreenSaverEngine{
     }
 
     IPictureSource CreateSourceFromSettings()
-        => pictureSource = new TemporaryPictureSource(AppDeps.Settings.Value.PicturePaths,
+        => pictureSource = new PictureSource(AppDeps.Settings.Value.PicturePaths,
                                                       AppDeps.Settings.Value.PictureSetSelected,
-                                                      AppDeps.Settings.Value.SlideMode,
                                                       AppDeps.Settings.Value.SlideShowDelay);
 
     void OnSaverClosed(object sender, EventArgs e){
@@ -184,11 +171,5 @@ sealed class ScreenSaverEngine{
                 saver.Close();
         }
         Cursor.Show();
-        if (AppDeps.Settings.Value.LastShownIndex != pictureSource.PictureIndex){
-            AppDeps.Settings.Value.LastShownIndex = pictureSource.PictureIndex;
-            AppDeps.Settings.Save();
-        }
     }
-    ScreenSaver[] savers;
-    TemporaryPictureSource pictureSource;
 }
