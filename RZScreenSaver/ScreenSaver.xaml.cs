@@ -79,7 +79,7 @@ partial class ScreenSaver{
                 else
                     pictureSource.Start();
                 return;
-            case Key.F9:
+            case Key.F8:
                 DeleteOrMoveCurrentFile();
                 return;
             case Key.F12:

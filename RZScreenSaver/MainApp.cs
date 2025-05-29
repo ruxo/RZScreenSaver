@@ -1,5 +1,7 @@
 using System;
 using System.Diagnostics;
+using System.IO;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Windows;
 
@@ -27,15 +29,15 @@ public static class MainApp{
     public const int InvalidWindowHandleError = -2;
 
     [STAThread]
-    public static int Main(string[] arg){
+    public static int Main(string[] arg) {
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+
+        var currentDirectory = Directory.GetCurrentDirectory();
+        Trace.WriteLine($"[RZScreenSaver] Current directory: {currentDirectory}");
+
         System.Windows.Forms.Application.EnableVisualStyles();
 
         #region Debug: print arguments & Settings
-
-        Debug.WriteLine("User app path = " + System.Windows.Forms.Application.LocalUserAppDataPath);
-        Debug.WriteLine("Principal = " + System.Threading.Thread.CurrentPrincipal.ToString());
-        Debug.WriteLine("Authenticated? " + System.Threading.Thread.CurrentPrincipal.Identity.IsAuthenticated);
 
         Debug.WriteLine("arg count = " + arg.Length);
         for(var i=0; i < arg.Length; ++i)

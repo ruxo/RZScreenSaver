@@ -292,7 +292,10 @@ public class PictureSource : IPictureSource{
     }
 
     IDisposable LoadPictureSet(FolderCollection fc, int startId = 0) {
-        var timing = Observable.Interval(TimeSpan.FromSeconds(2)).StartWith(0).Select(_ => new List<ImagePath>());
+        var timing = Observable.Timer(TimeSpan.FromSeconds(1))
+                               .Concat(Observable.Interval(TimeSpan.FromSeconds(5)))
+                               .StartWith(0)
+                               .Select(_ => new List<ImagePath>());
 
         List<ImagePath>? lastList = null;
         var source = RegeneratePictureList(fc, startId).Append(ImagePath.Empty).ToObservable(ThreadPoolScheduler.Instance);
@@ -321,9 +324,11 @@ public class PictureSource : IPictureSource{
                                  foreach (var i in GenerateImageOrder(list))
                                      slideOrder.Enqueue(i);
 
-                                 if (ended)
+                                 if (ended){
+                                     Debug.WriteLine("Picture list ended.");
                                      // ReSharper disable once AccessToModifiedClosure
                                      disposables.Dispose();
+                                 }
                              });
         return disposables;
     }

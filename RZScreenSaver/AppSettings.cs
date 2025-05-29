@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.Json;
+using Newtonsoft.Json;
 
 namespace RZScreenSaver;
 
@@ -45,7 +45,7 @@ sealed class AppSettingsRepository : IAppSettingsRepository
     public void Save(AppSettings? value = null) {
         if (!Directory.Exists(AppSettingFolder))
             Directory.CreateDirectory(AppSettingFolder);
-        var json = JsonSerializer.Serialize(value ?? Value);
+        var json = JsonConvert.SerializeObject(value ?? Value);
         File.WriteAllText(AppSettingFile, json);
         Value = value ?? Value;
     }
@@ -54,6 +54,6 @@ sealed class AppSettingsRepository : IAppSettingsRepository
         if (!Directory.Exists(AppSettingFolder) || !File.Exists(AppSettingFile))
             return new();
         var json = File.ReadAllText(AppSettingFile);
-        return JsonSerializer.Deserialize<AppSettings>(json) ?? new();
+        return JsonConvert.DeserializeObject<AppSettings>(json) ?? new();
     }
 }

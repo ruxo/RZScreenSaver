@@ -86,6 +86,7 @@ sealed class ScreenSaverEngine{
         var engineAssemblyPath = Assembly.GetExecutingAssembly().Location;
         Debug.Assert(engineAssemblyPath != null);
         var aboutDomain = AppDomain.CreateDomain("Background Domain");
+
         var helperTypeName = typeof (ForegroundDomain).FullName!;
         var foregroundDomain = (ForegroundDomain) aboutDomain.CreateInstanceFromAndUnwrap(engineAssemblyPath,helperTypeName);
         foregroundDomain.MainApplication = new BackgroundSlideShowEngine(Dispatcher.CurrentDispatcher, pictureSource, slideShowList);
