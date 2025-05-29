@@ -104,6 +104,7 @@ sealed class AppSettingsRepository : IAppSettingsRepository
 
     public void UpdateShownIndex(int setIndex, int shownIndex) {
         pictureCache[setIndex] = pictureCache[setIndex] with { ShownIndex = shownIndex };
+        cacheHeaderDirty = true;
     }
 
     public void InvalidPictureSet(int setIndex) {
