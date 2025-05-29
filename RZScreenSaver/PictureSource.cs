@@ -9,6 +9,8 @@ using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -279,6 +281,7 @@ public class PictureSource : IPictureSource{
                 else if (pictureMode == SlideMode.Random){
                     list = pictureList = GenerateRandomSequence(pictureList);
                     AppDeps.Settings.SavePictureSet(pictureSetSelected!.Value, pictureList, pictureMode, currentPictureIndex);
+                    lastCached = DateTimeOffset.Now;
                 }
             }
 
@@ -299,7 +302,7 @@ public class PictureSource : IPictureSource{
                 default: throw;
             }
             list.RemoveAt(currentPictureIndex);
-            AppDeps.Settings.SavePictureSet(pictureSetSelected!.Value, pictureList, pictureMode, currentPictureIndex, DateTimeOffset.MinValue);
+            AppDeps.Settings.SavePictureSet(pictureSetSelected!.Value, list, pictureMode, currentPictureIndex, lastCached);
             goto retry;
         }
     }
@@ -307,6 +310,8 @@ public class PictureSource : IPictureSource{
     #region Picture loaders
 
     IDisposable LoadInitialPictureSet(int setIndex, SlideMode mode) {
+        Trace.WriteLine($"Initialize picture set {setIndex} with mode {mode}.");
+
         var fc = picturePaths[setIndex];
         var timing = Observable.Timer(TimeSpan.FromSeconds(1))
                                .Concat(Observable.Interval(TimeSpan.FromSeconds(5)))
@@ -361,32 +366,39 @@ public class PictureSource : IPictureSource{
     }
 
     IDisposable ReloadPictureSet(int setIndex, SlideMode mode) {
-        var fc = picturePaths[setIndex];
-        var source = GenerateImageOrder(mode, RegeneratePictureList(fc)).ToObservable(ThreadPoolScheduler.Instance);
+        Trace.WriteLine($"Reload picture set {setIndex} with mode {mode}.");
 
-        return source.Aggregate(new List<ImagePath>(), (list, img) => {
-            list.Add(img);
-            return list;
-        }).Subscribe(list => {
+        var fc = picturePaths[setIndex];
+        var cancellation = new CancellationTokenSource();
+
+        Task.Run(() => {
+            var list = GenerateImageOrder(mode, RegeneratePictureList(fc, cancellation.Token));
+
             Trace.WriteLine($"Picture list changed. {list.Count} pictures.");
             pictureList = list;
             pictureMode = mode;
             lastCached = DateTimeOffset.Now;
             AppDeps.Settings.SavePictureSet(setIndex, pictureList, mode, currentPictureIndex);
+        }, cancellation.Token);
+
+        return Disposable.Create(cancellation, c => {
+            if (!c.IsCancellationRequested)
+                c.Cancel();
+            c.Dispose();
         });
     }
 
     #endregion
 
     [Pure]
-    static IEnumerable<ImagePath> RegeneratePictureList(FolderCollection folderList, int startId = 0) {
+    static IEnumerable<ImagePath> RegeneratePictureList(FolderCollection folderList, CancellationToken cancelToken = default) {
         var excludedFolders = (from folder in folderList
                                where folder.Inclusion == InclusionMode.Exclude
                                select folder.Path
                               ).ToArray();
         var isExcluded = IsExcluded(excludedFolders);
 
-        var id = startId;
+        var id = 0;
         return from folder in folderList
                let fileList = folder.Inclusion switch {
                    InclusionMode.Recursive => isExcluded(folder.Path) ? [] : GetImageFileRecursive(isExcluded, folder.Path),
@@ -396,7 +408,12 @@ public class PictureSource : IPictureSource{
                    _ => throw new NotSupportedException($"Unknown inclusion mode {folder.Inclusion}")
                }
                from filePath in fileList
-               select new ImagePath(id++, filePath, File.GetCreationTime(filePath));
+               select CheckCancel(cancelToken, new ImagePath(id++, filePath, File.GetCreationTime(filePath)));
+    }
+
+    static T CheckCancel<T>(CancellationToken cancelToken, T value) {
+        cancelToken.ThrowIfCancellationRequested();
+        return value;
     }
 
     [Pure]
