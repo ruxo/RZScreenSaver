@@ -42,7 +42,7 @@ public class SlidePage : Page, ISlidePage
     public virtual void OnShowPicture(PictureChangedEventArgs arg) { }
 
     protected static string FormatImageDescription(ImageSource image, string path, DateTime fileDate, int? orientation) {
-        if (orientation == null || orientation.Value == 0)
+        if (orientation is null or 0)
             return string.Format("[{0}x{1}] {2} {3}", image.Width.ToString("F0"),
                                  image.Height.ToString("F0"),
                                  fileDate.ToString("G"), path);
@@ -80,11 +80,9 @@ public class SlidePage : Page, ISlidePage
         }
     }
 
-    protected static void GetImageSizeByOrientation(ImageSource image, int? orientation, out Size imageSize) {
-        imageSize = IsLandscape(orientation) ? new Size(image.Width, image.Height) : new Size(image.Height, image.Width);
-    }
+    protected static Size GetImageSizeByOrientation(ImageSource image, int? orientation)
+        => IsLandscape(orientation) ? new Size(image.Width, image.Height) : new Size(image.Height, image.Width);
 
-    protected static bool IsLandscape(int? orientation) {
-        return orientation == null || orientation.Value == 0 || orientation.Value == 180;
-    }
+    protected static bool IsLandscape(int? orientation)
+        => orientation is null or 0 or 180;
 }

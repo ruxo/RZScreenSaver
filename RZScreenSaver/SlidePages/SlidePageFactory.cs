@@ -24,16 +24,17 @@ namespace RZScreenSaver.SlidePages{
         public interface ICreator{
             ISlidePage Create(DisplayMode displayMode);
         }
+
         class SimpleSlideCreator : ICreator{
-            public ISlidePage Create(DisplayMode displayMode){
-                return new SimpleSlide{DisplayMode = displayMode};
-            }
+            public ISlidePage Create(DisplayMode displayMode)
+                => new SimpleSlide{DisplayMode = displayMode};
         }
+
         class PhotoCollageCreator : ICreator{
-            public ISlidePage Create(DisplayMode displayMode){
-                return new PhotoCollagePage{DisplayMode = displayMode};
-            }
+            public ISlidePage Create(DisplayMode displayMode)
+                => new PhotoCollagePage{DisplayMode = displayMode};
         }
+
         class MixedCreator : ICreator{
             public ISlidePage Create(DisplayMode displayMode){
                 if (++count % 2 == 0)

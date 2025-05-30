@@ -4,12 +4,11 @@
     xmlns:rzp="clr-namespace:RZScreenSaver.SlidePages"
     xmlns:rzui="clr-namespace:RZScreenSaver.UI"
     Title="PhotoCollagePage" Background="Black">
-    <Grid>
-        <Image Name="pageSurface">
-        </Image>
+    <Canvas>
+        <Image Name="pageSurface" />
         <Label Name="imagePathText" Foreground="Lime" VerticalAlignment="Bottom" Visibility="Collapsed" Panel.ZIndex="10" />
         <Canvas Panel.ZIndex="5">
             <rzui:Postcard x:Name="postcard" Opacity="0" />
         </Canvas>
-    </Grid>
+    </Canvas>
 </rzp:SlidePage>

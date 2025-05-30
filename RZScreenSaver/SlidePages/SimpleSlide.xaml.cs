@@ -69,8 +69,7 @@ public partial class SimpleSlide{
         }
     }
     bool canImageFitScreen(ImageSource image, int? orientation){
-        Size imageSize;
-        GetImageSizeByOrientation(image, orientation, out imageSize);
+        var imageSize = GetImageSizeByOrientation(image, orientation);
 
         var parentWindow = Parent as FrameworkElement;
         return parentWindow != null && imageSize.Width <= parentWindow.Width && imageSize.Height <= parentWindow.Height;

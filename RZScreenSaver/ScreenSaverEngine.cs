@@ -5,14 +5,12 @@ using System.Reflection;
 using System.Threading;
 using System.Windows;
 using System.Windows.Forms;
-using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
 using RZScreenSaver.SlidePages;
 using Application=System.Windows.Application;
 using Cursor=System.Windows.Forms.Cursor;
-using KeyEventArgs=System.Windows.Input.KeyEventArgs;
 
 namespace RZScreenSaver;
 

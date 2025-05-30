@@ -49,13 +49,13 @@ partial class ConfigDialog{
         glassMaker = new GlassHelper(this, new Thickness(-1));
         glassMaker.ExtendGlassFrame();
     }
-    ListView currentFolderListView{
+    ListView CurrentFolderListView{
         get{
             var index = imageFolderTab.SelectedIndex;
             return imageFolderList[index];
         }
     }
-    FolderCollection currentFolderList{
+    FolderCollection CurrentFolderList{
         get{
             var index = imageFolderTab.SelectedIndex;
             return folderSet[index];
@@ -132,9 +132,9 @@ partial class ConfigDialog{
     }
     void SelectAndAddFolder(InclusionMode mode){
         if (folderDialog.ShowDialog(new Winform32Helper(this)) == System.Windows.Forms.DialogResult.OK){
-            if (!currentFolderList.Contains(folderDialog.SelectedPath)){
-                var folder = currentFolderList.Add(folderDialog.SelectedPath, mode);
-                currentFolderListView.Items.Add(folder);
+            if (!CurrentFolderList.Contains(folderDialog.SelectedPath)){
+                var folder = CurrentFolderList.Add(folderDialog.SelectedPath, mode);
+                CurrentFolderListView.Items.Add(folder);
             }
             EnableButtons(true);
         }
@@ -142,12 +142,12 @@ partial class ConfigDialog{
 
     #region Event Handlers
 
-    void onClearList(object sender, RoutedEventArgs e){
-        if (currentFolderList.Count > 0
+    void OnClearList(object sender, RoutedEventArgs e){
+        if (CurrentFolderList.Count > 0
          && MessageBox.Show("Are you sure to clear the list?", "Clear folder list",
                             MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes){
-            currentFolderListView.Items.Clear();
-            currentFolderList.Clear();
+            CurrentFolderListView.Items.Clear();
+            CurrentFolderList.Clear();
             EnableButtons(true);
         }
     }
@@ -169,27 +169,27 @@ partial class ConfigDialog{
         AppDeps.Settings.Save();
         DialogResult = true;
     }
-    void onAddExcludedFolder(object sender, RoutedEventArgs e){
+    void OnAddExcludedFolder(object sender, RoutedEventArgs e){
         SelectAndAddFolder(InclusionMode.Exclude);
     }
     void OnAddSingleFolder(object sender, RoutedEventArgs e){
         SelectAndAddFolder(InclusionMode.Single);
     }
-    void onAddRecursiveFolder(object sender, RoutedEventArgs e){
+    void OnAddRecursiveFolder(object sender, RoutedEventArgs e){
         SelectAndAddFolder(InclusionMode.Recursive);
     }
-    void onKeyPressedInGrid(object sender, KeyEventArgs e){
-        if (e.Key == Key.Delete && currentFolderListView.SelectedItems.Count > 0){
+    void OnKeyPressedInGrid(object sender, KeyEventArgs e){
+        if (e.Key == Key.Delete && CurrentFolderListView.SelectedItems.Count > 0){
             e.Handled = true;
-            var selectedFolders = currentFolderListView.SelectedItems.CastToArray<FolderInclusion>();
+            var selectedFolders = CurrentFolderListView.SelectedItems.CastToArray<FolderInclusion>();
             foreach (var folder in selectedFolders){
-                currentFolderListView.Items.Remove(folder);
-                currentFolderList.Remove(folder);
+                CurrentFolderListView.Items.Remove(folder);
+                CurrentFolderList.Remove(folder);
             }
             EnableButtons(true);
         }
     }
-    void onSelectBackground(object sender, RoutedEventArgs e){
+    void OnSelectBackground(object sender, RoutedEventArgs e){
         var fileDialog = new Microsoft.Win32.OpenFileDialog{
             InitialDirectory = backgroundPicture.Text,
             Title = "Browse background picture file",
@@ -203,7 +203,7 @@ partial class ConfigDialog{
             EnableButtons(true);
         }
     }
-    void onTextChanged(object sender, TextChangedEventArgs e){
+    void OnTextChanged(object sender, TextChangedEventArgs e){
         EnableButtons(true);
     }
 

@@ -58,13 +58,13 @@
             </DockPanel>
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
                 <Label>_Background</Label>
-                <TextBox Name="backgroundPicture" Width="300" TextChanged="onTextChanged" />
-                <Button Name="browseFolderButton" Click="onSelectBackground">Browse</Button>
+                <TextBox Name="backgroundPicture" Width="300" TextChanged="OnTextChanged" />
+                <Button Name="browseFolderButton" Click="OnSelectBackground">Browse</Button>
             </StackPanel>
                 <DockPanel DockPanel.Dock="Top">
-                <Button Name="clearListButton" Margin="10,3,5,3" DockPanel.Dock="Right" Click="onClearList">Clear List</Button>
-                <Button Name="addExclusionButton" Margin="3" DockPanel.Dock="Right" Click="onAddExcludedFolder">Add _Exclusive</Button>
-                <Button Name="addRecursiveButton" Margin="3" DockPanel.Dock="Right" Click="onAddRecursiveFolder">Add _Recursive</Button>
+                <Button Name="clearListButton" Margin="10,3,5,3" DockPanel.Dock="Right" Click="OnClearList">Clear List</Button>
+                <Button Name="addExclusionButton" Margin="3" DockPanel.Dock="Right" Click="OnAddExcludedFolder">Add _Exclusive</Button>
+                <Button Name="addRecursiveButton" Margin="3" DockPanel.Dock="Right" Click="OnAddRecursiveFolder">Add _Recursive</Button>
                 <Button Name="addSingleButton" Margin="3" DockPanel.Dock="Right" Click="OnAddSingleFolder">Add _Single</Button>
                     <Label VerticalContentAlignment="Bottom" Target="{Binding ElementName=imageFolderDefault1}" DockPanel.Dock="Left">Picture _Folder Default:</Label>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -76,7 +76,7 @@
             </DockPanel>
             <TabControl Name="imageFolderTab">
                 <TabItem Name="imageFolder1" Header="1">
-                    <ListView Name="imageFoldersList1" Margin="3" Keyboard.KeyUp="onKeyPressedInGrid">
+                    <ListView Name="imageFoldersList1" Margin="3" Keyboard.KeyUp="OnKeyPressedInGrid">
                         <ListView.View>
                             <GridView>
                                 <GridViewColumn Header="Path" DisplayMemberBinding="{Binding Path}" Width="400"/>
@@ -86,7 +86,7 @@
                     </ListView>
                 </TabItem>
                 <TabItem Name="imageFolder2" Header="2" >
-                    <ListView Name="imageFoldersList2" Margin="3" Keyboard.KeyUp="onKeyPressedInGrid">
+                    <ListView Name="imageFoldersList2" Margin="3" Keyboard.KeyUp="OnKeyPressedInGrid">
                         <ListView.View>
                             <GridView>
                                 <GridViewColumn Header="Path" DisplayMemberBinding="{Binding Path}" Width="400"/>
@@ -96,7 +96,7 @@
                     </ListView>
                 </TabItem>
                 <TabItem Name="imageFolder3" Header="3" >
-                    <ListView Name="imageFoldersList3" Margin="3" Keyboard.KeyUp="onKeyPressedInGrid">
+                    <ListView Name="imageFoldersList3" Margin="3" Keyboard.KeyUp="OnKeyPressedInGrid">
                         <ListView.View>
                             <GridView>
                                 <GridViewColumn Header="Path" DisplayMemberBinding="{Binding Path}" Width="400"/>
@@ -106,7 +106,7 @@
                     </ListView>
                 </TabItem>
                 <TabItem Name="imageFolder4" Header="4" >
-                    <ListView Name="imageFoldersList4" Margin="3" Keyboard.KeyUp="onKeyPressedInGrid">
+                    <ListView Name="imageFoldersList4" Margin="3" Keyboard.KeyUp="OnKeyPressedInGrid">
                         <ListView.View>
                             <GridView>
                                 <GridViewColumn Header="Path" DisplayMemberBinding="{Binding Path}" Width="400"/>

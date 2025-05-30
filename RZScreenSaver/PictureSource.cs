@@ -26,9 +26,9 @@ public class PictureChangedEventArgs : EventArgs{
         for(var count=0; count < ProvidedRandomValue; ++count)
             randomValues[count] = MainApp.Rand();
     }
-    public int Random(int slot, int maxValue){
-        return (int) (maxValue*(long)randomValues[slot]/int.MaxValue);
-    }
+    public int Random(int slot, int maxValue)
+        => (int) (maxValue*(long)randomValues[slot]/int.MaxValue);
+
     const int ProvidedRandomValue = 4;
     public DateTime FileDate { get; private set; }
     public string Path { get; private set; }
