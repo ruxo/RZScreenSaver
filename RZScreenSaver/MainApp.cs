@@ -76,7 +76,12 @@ public static class MainApp{
 
             _ => throw new NotSupportedException("FATAL: Unhandle main command " + command)
         };
-        return a?.Run() ?? 0;
+        try{
+            return a?.Run() ?? 0;
+        }
+        finally{
+            AppDeps.Shutdown();
+        }
     }
     static MainCommand ExtractCommand(string[] arg, out IntPtr previewWindow){
         if (arg.Length == 0){
