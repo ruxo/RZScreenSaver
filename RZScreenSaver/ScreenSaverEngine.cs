@@ -127,7 +127,7 @@ sealed class ScreenSaverEngine{
                                       0, 0, 0, parentRect.Width, parentRect.Height, "RZ Screen Saver Preview",
                                       previewWindow, false);
         var source = CreateSourceFromSettings();
-        var slidePage = SlidePageFactory.Create(AppDeps.Settings.Value.SaverMode).Create(AppDeps.Settings.Value.DisplayMode);
+        var slidePage = SlidePageFactory.Create(AppDeps.Settings.Value.SaverMode)(new(parentRect.Width, parentRect.Height), AppDeps.Settings.Value.DisplayMode);
         source.PictureChanged.Subscribe(e => slidePage.OnShowPicture(e));
         wpfWin32.RootVisual = (Visual) slidePage;
         wpfWin32.Disposed += delegate { Application.Current.Shutdown(); };
@@ -152,7 +152,7 @@ sealed class ScreenSaverEngine{
         var result = (from screen in Screen.AllScreens
                       let b = screen.Bounds
                       let rect = new Rect(b.Left, b.Top, b.Width, b.Height)
-                      select hostCreator(source, rect, slideCreator.Create(AppDeps.Settings.Value.DisplayMode))).ToArray();
+                      select hostCreator(source, rect, slideCreator(b.Size, AppDeps.Settings.Value.DisplayMode))).ToArray();
         foreach (var host in result)
             hostConfigurer(host);
         source.Start();

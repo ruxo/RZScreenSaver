@@ -18,7 +18,9 @@ public partial class PhotoCollagePage{
     readonly record struct Range(double Min, double Max);
 
     readonly BitmapSource? background;
+    readonly System.Drawing.Size screen;
 
+    Point dpi;
     int pageWidth, pageHeight;
     double minCardArea, maxCardArea;
     RenderTargetBitmap liveBackground;
@@ -29,16 +31,15 @@ public partial class PhotoCollagePage{
         // TODO: Decouple this class from Settings!
         ViewAngle = AppDeps.Settings.Value.PhotoCollageAngle;
         SquareCardSize = new Range(AppDeps.Settings.Value.MinSquareCardSize, AppDeps.Settings.Value.MaxSquareCardSize);
-
-        var dpiScaleX = SystemParameters.PrimaryScreenWidth / SystemParameters.WorkArea.Width;
-        var dpiScaleY = SystemParameters.PrimaryScreenHeight / SystemParameters.WorkArea.Height;
-
-        DPI = new(96.0 * dpiScaleX, 96.0 * dpiScaleY);
     }
-    public PhotoCollagePage() {
+
+    public PhotoCollagePage() : this(new(1920, 1080)){ }
+
+    public PhotoCollagePage(System.Drawing.Size size) {
+        screen = size;
         InitializeComponent();
 
-        liveBackground = new RenderTargetBitmap(1, 1, DPI.X, DPI.Y, PixelFormats.Default);
+        liveBackground = new RenderTargetBitmap(1, 1, dpi.X, dpi.Y, PixelFormats.Default);
         pageSurface.Source = liveBackground;
 
         if (AppDeps.Settings.Value.BackgroundPicturePath is { } picturePath)
@@ -61,7 +62,6 @@ public partial class PhotoCollagePage{
     static readonly int ViewAngle;
     const int AnglePrecision = 100;
     static readonly Range SquareCardSize;
-    static readonly Point DPI;
 
     public override bool ShowTitle{
         get => imagePathText.Visibility == Visibility.Visible;
@@ -70,9 +70,14 @@ public partial class PhotoCollagePage{
     protected override Size ArrangeOverride(Size arrangeBounds) {
         var result = base.ArrangeOverride(arrangeBounds);
 
-        // there may be better place for this code... (changing child in this method cause this method to be called again :(
         pageWidth = (int)result.Width;
         pageHeight = (int) result.Height;
+
+        var deviceInfo = PresentationSource.FromVisual(this)?.CompositionTarget?.TransformToDevice ?? throw new InvalidOperationException("No presentation source");
+        dpi = new(deviceInfo.M11 * 96, deviceInfo.M22 * 96);
+
+        pageSurface.Source = liveBackground = new RenderTargetBitmap(screen.Width, screen.Height, dpi.X, dpi.Y, PixelFormats.Default);
+
         if (Math.Abs(liveBackground.Width - result.Width) > 1e-6 || Math.Abs(liveBackground.Height - result.Height) > 1e-6)
             ResetViewBitmaps(pageWidth, pageHeight);
 
@@ -140,7 +145,6 @@ public partial class PhotoCollagePage{
     }
 
     void ResetViewBitmaps(int width, int height) {
-        pageSurface.Source = liveBackground = new RenderTargetBitmap(width, height, DPI.X, DPI.Y, PixelFormats.Default);
         RebuildSurfaceBackground(liveBackground);
 
         var area = width*height;
