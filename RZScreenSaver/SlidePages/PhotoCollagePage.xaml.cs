@@ -39,7 +39,7 @@ public partial class PhotoCollagePage{
         screen = size;
         InitializeComponent();
 
-        liveBackground = new RenderTargetBitmap(1, 1, dpi.X, dpi.Y, PixelFormats.Default);
+        liveBackground = new RenderTargetBitmap(1, 1, 96, 96, PixelFormats.Default); // this will be recreated in ArrangeOverride.
         pageSurface.Source = liveBackground;
 
         if (AppDeps.Settings.Value.BackgroundPicturePath is { } picturePath)
@@ -67,22 +67,31 @@ public partial class PhotoCollagePage{
         get => imagePathText.Visibility == Visibility.Visible;
         set => imagePathText.Visibility = value? Visibility.Visible : Visibility.Collapsed;
     }
+
     protected override Size ArrangeOverride(Size arrangeBounds) {
         var result = base.ArrangeOverride(arrangeBounds);
 
         pageWidth = (int)result.Width;
-        pageHeight = (int) result.Height;
+        pageHeight = (int)result.Height;
 
         var deviceInfo = PresentationSource.FromVisual(this)?.CompositionTarget?.TransformToDevice ?? throw new InvalidOperationException("No presentation source");
         dpi = new(deviceInfo.M11 * 96, deviceInfo.M22 * 96);
 
         pageSurface.Source = liveBackground = new RenderTargetBitmap(screen.Width, screen.Height, dpi.X, dpi.Y, PixelFormats.Default);
 
-        if (Math.Abs(liveBackground.Width - result.Width) > 1e-6 || Math.Abs(liveBackground.Height - result.Height) > 1e-6)
-            ResetViewBitmaps(pageWidth, pageHeight);
+        RebuildSurfaceBackground(liveBackground);
+        ResetViewBitmaps(pageWidth, pageHeight);
+        var area = pageWidth * pageHeight;
+        minCardArea = area * SquareCardSize.Min * SquareCardSize.Min;
+        maxCardArea = area * SquareCardSize.Max * SquareCardSize.Max;
+        Debug.Write("Min/Max Size = ");
+        Debug.Write(minCardArea);
+        Debug.Write(',');
+        Debug.WriteLine(maxCardArea);
 
         return result;
     }
+
     public override void OnPictureSetChanged(){
         liveBackground.Clear();
         RebuildSurfaceBackground(liveBackground);
@@ -145,12 +154,5 @@ public partial class PhotoCollagePage{
     }
 
     void ResetViewBitmaps(int width, int height) {
-        RebuildSurfaceBackground(liveBackground);
-
-        var area = width*height;
-        minCardArea = area*SquareCardSize.Min*SquareCardSize.Min;
-        maxCardArea = area*SquareCardSize.Max*SquareCardSize.Max;
-        Debug.Write("Min/Max Size = ");
-        Debug.Write(minCardArea); Debug.Write(','); Debug.WriteLine(maxCardArea);
     }
 }
